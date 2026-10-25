@@ -1,0 +1,48 @@
+{
+  "name": "swara-setu",
+  "version": "1.0.0",
+  "description": "Swara-Setu (ಸ್ವರಸೇತು) — Regional Language Explorer for Problem Statement 4: Namma Kannada, Karnataka Digital Innovation Hackathon 2026",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "tsx scripts/seed.ts",
+    "seed:force": "tsx scripts/seed.ts --force",
+    "seed:excel": "tsx scripts/seed_from_excel.ts",
+    "seed:excel:force": "tsx scripts/seed_from_excel.ts --force",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^1.30.0",
+    "@react-three/drei": "^9.13.0",
+    "@react-three/fiber": "^8.18.0",
+    "d3-geo": "^3.0.0",
+    "framer-motion": "^11.18.0",
+    "lucide-react": "^0.546.0",
+    "mongoose": "^8.19.0",
+    "next": "14.2.20",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.0.13",
+    "@types/node": "^22.10.0",
+    "@types/pngjs": "^6.0.5",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "pngjs": "^7.0.0",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

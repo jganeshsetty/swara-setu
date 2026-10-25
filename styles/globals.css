@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --obsidian-900: #0b0908;
+    --obsidian-800: #140c0a;
+    --obsidian-700: #1f1613;
+    --arishina-400: #f5b700;
+    --arishina-500: #ffd13b;
+    --arishina-600: #e6a800;
+    --kumkuma-500: #c81d25;
+    --kumkuma-600: #e63946;
+    --kumkuma-700: #a0161c;
+    --glass-bg: rgba(20, 14, 12, 0.72);
+    --glass-border: rgba(245, 183, 0, 0.22);
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: radial-gradient(
+      circle at 50% 30%,
+      var(--obsidian-700) 0%,
+      var(--obsidian-900) 70%,
+      var(--obsidian-900) 100%
+    );
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: #f5f0ec;
+  }
+
+  #__next {
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+/* Custom scrollbar for the glassmorphic drawers */
+.drawer-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.drawer-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.drawer-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 3px;
+}
+.drawer-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--arishina-400);
+}
+
+/* Glassmorphic surface helper */
+.glass-surface {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
