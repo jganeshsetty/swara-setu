@@ -16,6 +16,7 @@
     "seed:force": "tsx scripts/seed.ts --force",
     "seed:excel": "tsx scripts/seed_from_excel.ts",
     "seed:excel:force": "tsx scripts/seed_from_excel.ts --force",
+    "seed:csv": "tsx scripts/seed_from_csv.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
