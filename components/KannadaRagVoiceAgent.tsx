@@ -132,7 +132,16 @@ export default function KannadaRagVoiceAgent() {
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Clean bullets, markdown asterisks, brackets and English labels for natural human speech
+    const cleanSpeechText = text
+      .replace(/[•*#_"`]/g, "")
+      .replace(/\(.*?\)/g, "")
+      .replace(/ಇಂಗ್ಲಿಷ್ ಅರ್ಥ:.*$/gm, "")
+      .replace(/English:.*$/gm, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanSpeechText || text);
     utterance.lang = "kn-IN";
     utterance.rate = 0.93;
 
