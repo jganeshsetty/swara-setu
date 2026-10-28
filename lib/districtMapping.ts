@@ -13,6 +13,8 @@ export const DISTRICT_TO_REGION_MAP: Record<string, string> = {
   "Koppal": "tungabhadra_belt",
   "Ballari": "tungabhadra_belt",
   "Vijayanagara": "tungabhadra_belt",
+  "Hosapete": "tungabhadra_belt",
+  "Hampi": "tungabhadra_belt",
 
   // 3. Krishna Valley (3 districts)
   "Belagavi": "krishna_valley",
@@ -87,4 +89,7 @@ export const KANNADA_DISTRICT_NAMES: Record<string, string> = {
   "Mysuru": "ಮೈಸೂರು",
   "Vijayapura": "ವಿಜಯಪುರ",
   "Vijayanagara": "ವಿಜಯನಗರ",
+  "Hosapete": "ಹೊಸಪೇಟೆ",
+  "Hampi": "ಹಂಪಿ",
+  "Mangaluru": "ಮಂಗಳೂರು",
 };

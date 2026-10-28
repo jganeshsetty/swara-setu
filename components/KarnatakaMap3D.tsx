@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Play, Volume2, X, Compass, Sparkles, MapPin, ChevronRight, ChevronLeft, Layers, RotateCcw, ZoomIn, ZoomOut, Info, BookOpen, MousePointer, HelpCircle } from "lucide-react";
+import { Play, Volume2, X, Compass, Sparkles, MapPin, ChevronRight, ChevronLeft, Layers, RotateCcw, ZoomIn, ZoomOut, Info, BookOpen, MousePointer, HelpCircle, Users, Landmark, Languages, Radio, CheckCircle2 } from "lucide-react";
 
 import { DISTRICT_TO_REGION_MAP, KANNADA_DISTRICT_NAMES } from "@/lib/districtMapping";
+import { subscribeAgentLocationHighlight, dispatchMapDistrictSelect, type LocationHighlightEvent } from "@/lib/agentMapSync";
+import RegionBentoOverlay from "./RegionBentoOverlay";
 
 export interface RegionData {
   regionId: string;
@@ -35,6 +37,7 @@ export default function KarnatakaMap3D() {
   const [hoveredDistrictName, setHoveredDistrictName] = useState<string | null>(null);
   const [activeRegionData, setActiveRegionData] = useState<RegionData | null>(null);
   const [clickedDistrict, setClickedDistrict] = useState<string | null>(null);
+  const [clickOrigin, setClickOrigin] = useState<{ x: number; y: number } | null>(null);
   const [isLoadingSentences, setIsLoadingSentences] = useState(false);
   const [playingSentenceText, setPlayingSentenceText] = useState<string | null>(null);
 
@@ -57,6 +60,12 @@ export default function KarnatakaMap3D() {
   const initialPinchDistRef = useRef<number | null>(null);
   const initialScaleRef = useRef(1.0);
   const [isGrabbing, setIsGrabbing] = useState(false);
+
+  // Synchronized Agent-to-Map Navigation State
+  const [highlightedAgentDistrict, setHighlightedAgentDistrict] = useState<string | null>(null);
+  const [pulsePingPos, setPulsePingPos] = useState<[number, number] | null>(null);
+  const flyToDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const pingClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [, startTransition] = useTransition();
 
@@ -284,11 +293,24 @@ export default function KarnatakaMap3D() {
   }, []);
 
   // 5. On Click: Dynamically fetch regional dialect data for the clicked district from MongoDB API
-  const handleDistrictClick = async (districtName: string, regionCode: string) => {
+  const handleDistrictClick = async (
+    districtName: string,
+    regionCode: string,
+    originCoords?: { x: number; y: number } | null
+  ) => {
     if (dragDistanceRef.current > 7) return;
 
+    if (originCoords) {
+      setClickOrigin(originCoords);
+    }
     setClickedDistrict(districtName);
     setIsLoadingSentences(true);
+
+    dispatchMapDistrictSelect({
+      district: districtName,
+      regionCode,
+      regionNameKannada: KANNADA_DISTRICT_NAMES[districtName] || districtName,
+    });
 
     try {
       // Dynamic query to our RESTful district endpoint
@@ -346,12 +368,81 @@ export default function KarnatakaMap3D() {
     }
   };
 
+  // Cinematic Map Navigation (Fly-To) & Agent-to-Map Subscription
+  const flyToDistrict = (districtName: string, regionCode: string) => {
+    const targetDistrict = projectedDistricts.find(
+      (d) => d.districtName.toLowerCase() === districtName.toLowerCase()
+    );
+
+    // Calculate subtle target orientation based on centroid position
+    let targetRotX = 22;
+    let targetRotY = -12;
+    let targetScale = 1.25;
+
+    if (targetDistrict) {
+      const [cx, cy] = targetDistrict.centroid;
+      // Slight perspective tilt towards the district centroid
+      const normX = (cx - 400) / 400; // -1 to 1
+      const normY = (cy - 500) / 500; // -1 to 1
+
+      targetRotY = -12 - normX * 10;
+      targetRotX = 22 + normY * 8;
+      targetScale = 1.30;
+
+      // Trigger radar pulse ping animation at coordinates
+      setPulsePingPos([cx, cy]);
+      if (pingClearTimeoutRef.current) clearTimeout(pingClearTimeoutRef.current);
+      pingClearTimeoutRef.current = setTimeout(() => {
+        setPulsePingPos(null);
+      }, 4500);
+    }
+
+    rotationRef.current = { x: targetRotX, y: targetRotY, z: -2.0 };
+    scaleRef.current = targetScale;
+    setCurrentScale(targetScale);
+
+    if (mapSvgGroupRef.current) {
+      // Cinematic transition with elegant cubic-bezier easing
+      mapSvgGroupRef.current.style.transition = "transform 1.1s cubic-bezier(0.19, 1, 0.22, 1)";
+      applyTransform();
+    }
+
+    // Set highlighted district and open the glassmorphic overlay panel
+    setHighlightedAgentDistrict(districtName);
+    setHoveredDistrictName(districtName);
+    setHoveredRegion(regionCode);
+
+    handleDistrictClick(districtName, regionCode);
+  };
+
+  // Subscribe to real-time Agent Location Highlight events with debouncing
+  useEffect(() => {
+    const unsubscribe = subscribeAgentLocationHighlight((eventData: LocationHighlightEvent) => {
+      // Debounce multiple rapid mentions in conversational sentences
+      if (flyToDebounceRef.current) {
+        clearTimeout(flyToDebounceRef.current);
+      }
+
+      flyToDebounceRef.current = setTimeout(() => {
+        flyToDistrict(eventData.districtName, eventData.regionCode);
+      }, 350);
+    });
+
+    return () => {
+      unsubscribe();
+      if (flyToDebounceRef.current) clearTimeout(flyToDebounceRef.current);
+      if (pingClearTimeoutRef.current) clearTimeout(pingClearTimeoutRef.current);
+    };
+  }, [projectedDistricts]);
+
   const resetView = () => {
     rotationRef.current = { x: 20, y: -14, z: -2.5 };
     scaleRef.current = 1.0;
     setCurrentScale(1.0);
+    setHighlightedAgentDistrict(null);
+    setPulsePingPos(null);
     if (mapSvgGroupRef.current) {
-      mapSvgGroupRef.current.style.transition = "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
+      mapSvgGroupRef.current.style.transition = "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)";
       applyTransform();
     }
   };
@@ -372,104 +463,110 @@ export default function KarnatakaMap3D() {
       }}
     >
       {/* Top Kannada Header Badge with Glassmorphism */}
-      <header className="absolute top-3 sm:top-5 left-3 sm:left-6 z-20 pointer-events-none flex items-center gap-2.5 sm:gap-3">
-        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-400/15 border border-amber-500/30 backdrop-blur-xl flex items-center justify-center text-amber-600 shadow-[0_8px_20px_rgba(255,183,0,0.25)] shrink-0">
-          <Compass className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <h1 className="font-serif text-base sm:text-lg font-bold text-stone-900 tracking-tight flex items-center gap-1.5">
-              ಸ್ವರಸೇತು
-              <span className="font-sans text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-sm border border-amber-300">
-                ನಮ್ಮ ಕನ್ನಡ
-              </span>
-            </h1>
+      {!activeRegionData && (
+        <header className="absolute top-3 sm:top-5 left-3 sm:left-6 z-20 pointer-events-none flex items-center gap-2.5 sm:gap-3 transition-opacity duration-300">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-400/15 border border-amber-500/30 backdrop-blur-xl flex items-center justify-center text-amber-600 shadow-[0_8px_20px_rgba(255,183,0,0.25)] shrink-0">
+            <Compass className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
           </div>
-          <p className="text-[10px] sm:text-[11px] text-stone-600 tracking-wide font-medium hidden xs:block">
-            ಪ್ರಾದೇಶಿಕ ಉಪಭಾಷಾ ಪರಿಶೋಧಕ • ತಿರುಗಿಸಲು ಮೌಸ್ ಎಳೆಯಿರಿ (±೧೮೦°)
-          </p>
-        </div>
-      </header>
+          <div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="font-serif text-base sm:text-lg font-bold text-stone-900 tracking-tight flex items-center gap-1.5">
+                ಸ್ವರಸೇತು
+                <span className="font-sans text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-sm border border-amber-300">
+                  ನಮ್ಮ ಕನ್ನಡ
+                </span>
+              </h1>
+            </div>
+            <p className="text-[10px] sm:text-[11px] text-stone-600 tracking-wide font-medium hidden xs:block">
+              ಪ್ರಾದೇಶಿಕ ಉಪಭಾಷಾ ಪರಿಶೋಧಕ • ತಿರುಗಿಸಲು ಮೌಸ್ ಎಳೆಯಿರಿ (±೧೮೦°)
+            </p>
+          </div>
+        </header>
+      )}
 
       {/* Left-Side Refined Slim Zoom Control Slider Bar with Hide/See Arrow Toggle */}
-      <div className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex items-center transition-all duration-300">
-        {/* Toggle Arrow Button for Left Zoom Bar */}
-        <button
-          type="button"
-          onClick={() => setIsZoomControlsVisible(!isZoomControlsVisible)}
-          className={`w-6 h-10 sm:w-7 sm:h-12 rounded-r-xl backdrop-blur-xl bg-white/90 hover:bg-white text-stone-800 border-y border-r border-amber-300/60 shadow-[0_4px_16px_rgba(0,0,0,0.12)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-            isZoomControlsVisible ? "order-2 -ml-1" : "order-1 ml-0"
-          }`}
-          title={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
-          aria-label={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
-        >
-          {isZoomControlsVisible ? (
-            <ChevronLeft className="w-4 h-4 text-amber-900" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-amber-900" />
+      {!activeRegionData && (
+        <div className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex items-center transition-all duration-300">
+          {/* Toggle Arrow Button for Left Zoom Bar */}
+          <button
+            type="button"
+            onClick={() => setIsZoomControlsVisible(!isZoomControlsVisible)}
+            className={`w-6 h-10 sm:w-7 sm:h-12 rounded-r-xl backdrop-blur-xl bg-white/90 hover:bg-white text-stone-800 border-y border-r border-amber-300/60 shadow-[0_4px_16px_rgba(0,0,0,0.12)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+              isZoomControlsVisible ? "order-2 -ml-1" : "order-1 ml-0"
+            }`}
+            title={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
+            aria-label={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
+          >
+            {isZoomControlsVisible ? (
+              <ChevronLeft className="w-4 h-4 text-amber-900" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-amber-900" />
+            )}
+          </button>
+
+          {/* Collapsible Slider Card */}
+          {isZoomControlsVisible && (
+            <div className="order-1 backdrop-blur-2xl bg-white/80 border border-amber-300/40 shadow-[0_12px_32px_rgba(255,95,3,0.12)] rounded-2xl px-1.5 sm:px-2 py-2.5 sm:py-3 flex flex-col items-center gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-left-4">
+              {/* Thin Zoom In Button */}
+              <button
+                type="button"
+                onClick={() => setZoomLevel(Number((scaleRef.current + 0.08).toFixed(2)))}
+                className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#FFFF00]/40 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-sm"
+                title="ಸ್ವಲ್ಪ ಹಿಗ್ಗಿಸಿ (Zoom In)"
+              >
+                <ZoomIn className="w-3 h-3 text-stone-900" />
+              </button>
+
+              {/* Vertical Slider Track Styled with Yellow (#FFFF00) to Red (#FF5F03) Karnataka Gradient */}
+              <div className="h-32 sm:h-36 flex items-center justify-center relative">
+                <input
+                  type="range"
+                  min="0.85"
+                  max="1.45"
+                  step="0.02"
+                  value={currentScale}
+                  onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
+                  style={{
+                    background: "linear-gradient(to right, #FF5F03, #FFFF00)",
+                  }}
+                  className="accent-[#FF5F03] cursor-pointer h-1 w-24 sm:w-28 -rotate-90 rounded-full border border-stone-300/40 shadow-inner outline-none transition-all"
+                  title={`ಜೂಮ್: ${Math.round(currentScale * 100)}% (ಆರಾಮದಾಯಕ ಮಿತಿ)`}
+                />
+              </div>
+
+              {/* Thin Zoom Out Button */}
+              <button
+                type="button"
+                onClick={() => setZoomLevel(Number((scaleRef.current - 0.08).toFixed(2)))}
+                className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#FF5F03]/20 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-sm"
+                title="ಸ್ವಲ್ಪ ಕುಗ್ಗಿಸಿ (Zoom Out)"
+              >
+                <ZoomOut className="w-3 h-3 text-stone-900" />
+              </button>
+
+              {/* Current Scale Display Pill */}
+              <div className="pt-1 border-t border-amber-200/50 text-[9px] font-bold text-stone-700 tracking-tighter">
+                {Math.round(currentScale * 100)}%
+              </div>
+            </div>
           )}
-        </button>
-
-        {/* Collapsible Slider Card */}
-        {isZoomControlsVisible && (
-          <div className="order-1 backdrop-blur-2xl bg-white/80 border border-amber-300/40 shadow-[0_12px_32px_rgba(255,95,3,0.12)] rounded-2xl px-1.5 sm:px-2 py-2.5 sm:py-3 flex flex-col items-center gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-left-4">
-            {/* Thin Zoom In Button */}
-            <button
-              type="button"
-              onClick={() => setZoomLevel(Number((scaleRef.current + 0.08).toFixed(2)))}
-              className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#FFFF00]/40 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-sm"
-              title="ಸ್ವಲ್ಪ ಹಿಗ್ಗಿಸಿ (Zoom In)"
-            >
-              <ZoomIn className="w-3 h-3 text-stone-900" />
-            </button>
-
-            {/* Vertical Slider Track Styled with Yellow (#FFFF00) to Red (#FF5F03) Karnataka Gradient */}
-            <div className="h-32 sm:h-36 flex items-center justify-center relative">
-              <input
-                type="range"
-                min="0.85"
-                max="1.45"
-                step="0.02"
-                value={currentScale}
-                onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
-                style={{
-                  background: "linear-gradient(to right, #FF5F03, #FFFF00)",
-                }}
-                className="accent-[#FF5F03] cursor-pointer h-1 w-24 sm:w-28 -rotate-90 rounded-full border border-stone-300/40 shadow-inner outline-none transition-all"
-                title={`ಜೂಮ್: ${Math.round(currentScale * 100)}% (ಆರಾಮದಾಯಕ ಮಿತಿ)`}
-              />
-            </div>
-
-            {/* Thin Zoom Out Button */}
-            <button
-              type="button"
-              onClick={() => setZoomLevel(Number((scaleRef.current - 0.08).toFixed(2)))}
-              className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#FF5F03]/20 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-sm"
-              title="ಸ್ವಲ್ಪ ಕುಗ್ಗಿಸಿ (Zoom Out)"
-            >
-              <ZoomOut className="w-3 h-3 text-stone-900" />
-            </button>
-
-            {/* Current Scale Display Pill */}
-            <div className="pt-1 border-t border-amber-200/50 text-[9px] font-bold text-stone-700 tracking-tighter">
-              {Math.round(currentScale * 100)}%
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Floating View Reset Control */}
-      <div className="absolute bottom-4 sm:bottom-6 left-3 sm:left-6 z-20 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={resetView}
-          className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/70 hover:bg-white/95 border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 transition-all flex items-center gap-1.5 sm:gap-2 hover:scale-105 active:scale-95"
-          title="ಕೋನ ಮರುಹೊಂದಿಸಿ"
-        >
-          <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-          <span className="hidden xs:inline">ಕೋನ ಮರುಹೊಂದಿಸಿ (Reset)</span>
-        </button>
-      </div>
+      {!activeRegionData && (
+        <div className="absolute bottom-4 sm:bottom-6 left-3 sm:left-6 z-20 flex items-center gap-2 transition-all duration-300">
+          <button
+            type="button"
+            onClick={resetView}
+            className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/70 hover:bg-white/95 border border-white/80 shadow-[0_8px_25px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 transition-all flex items-center gap-1.5 sm:gap-2 hover:scale-105 active:scale-95"
+            title="ಕೋನ ಮರುಹೊಂದಿಸಿ"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden xs:inline">ಕೋನ ಮರುಹೊಂದಿಸಿ (Reset)</span>
+          </button>
+        </div>
+      )}
 
       {/* Regional Hover Indicator Pill (Glassmorphic Glow) */}
       {hoveredRegion && (
@@ -692,6 +789,15 @@ export default function KarnatakaMap3D() {
                 <feDropShadow dx="0" dy="16" stdDeviation="12" floodColor="#000000" floodOpacity="0.55" />
                 <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#FFFF00" floodOpacity="0.50" />
               </filter>
+
+              {/* 8. Synchronized Agent Radar Ping Glow */}
+              <filter id="agentActiveRadarGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
 
             {/* 3D Rotating Transform Group */}
@@ -799,6 +905,7 @@ export default function KarnatakaMap3D() {
                 const isRegionActive = hoveredRegion === district.regionCode;
                 const isHoveredSingle = hoveredDistrictName === district.districtName;
                 const isSelected = activeRegionData?.regionId === district.regionCode;
+                const isAgentHighlighted = highlightedAgentDistrict?.toLowerCase() === district.districtName.toLowerCase();
 
                 const isNorth = isNorthernDistrict(district.centroidY);
 
@@ -806,7 +913,7 @@ export default function KarnatakaMap3D() {
                 // Base: url(#glossyYellow) for North, url(#glossyRed) for South
                 // Active cluster on hover: url(#activeGlowYellow) or url(#activeGlowRed)
                 let fill = isNorth ? "url(#glossyYellow)" : "url(#glossyRed)";
-                if (isRegionActive || isSelected) {
+                if (isRegionActive || isSelected || isAgentHighlighted) {
                   fill = isNorth ? "url(#activeGlowYellow)" : "url(#activeGlowRed)";
                 }
 
@@ -816,13 +923,15 @@ export default function KarnatakaMap3D() {
                     className="transition-all duration-300"
                     style={{
                       transformStyle: "preserve-3d",
-                      // Realistic dynamic elevation on hover
-                      transform: isRegionActive || isHoveredSingle
+                      // Realistic dynamic elevation on hover or agent highlight
+                      transform: isAgentHighlighted
+                        ? "translate3d(0, -12px, 64px) scale(1.05)"
+                        : isRegionActive || isHoveredSingle
                         ? "translate3d(0, -8px, 52px) scale(1.03)"
                         : isSelected
                         ? "translate3d(0, -4px, 30px) scale(1.015)"
                         : "translate3d(0, 0, 0px) scale(1)",
-                      filter: isRegionActive || isHoveredSingle
+                      filter: isAgentHighlighted || isRegionActive || isHoveredSingle
                         ? "url(#raisedTileShadow)"
                         : "none",
                     }}
@@ -834,19 +943,26 @@ export default function KarnatakaMap3D() {
                       setHoveredRegion(null);
                       setHoveredDistrictName(null);
                     }}
-                    onClick={() => handleDistrictClick(district.districtName, district.regionCode)}
+                    onClick={(e) =>
+                      handleDistrictClick(district.districtName, district.regionCode, {
+                        x: e.clientX,
+                        y: e.clientY,
+                      })
+                    }
                   >
                     {/* Shiny Top Tile Surface with Solid Black Borders */}
                     <path
                       d={district.pathD}
                       fill={fill}
-                      stroke="#000000"
-                      strokeWidth={isRegionActive ? "2.8" : "1.8"}
+                      stroke={isAgentHighlighted ? "#FF0055" : "#000000"}
+                      strokeWidth={isAgentHighlighted ? "3.8" : isRegionActive ? "2.8" : "1.8"}
                       strokeLinejoin="round"
                       strokeLinecap="round"
                       className="cursor-pointer transition-all duration-200"
                       style={{
-                        filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.15))",
+                        filter: isAgentHighlighted
+                          ? "drop-shadow(0 0 10px rgba(255,0,85,0.85))"
+                          : "drop-shadow(0 2px 3px rgba(0,0,0,0.15))",
                       }}
                     />
 
@@ -881,175 +997,84 @@ export default function KarnatakaMap3D() {
                   </g>
                 );
               })}
+
+              {/* Real-time Synchronized Agent Radar Ping Pulse Indicator */}
+              {pulsePingPos && (
+                <g
+                  style={{
+                    transform: `translate3d(${pulsePingPos[0]}px, ${pulsePingPos[1]}px, 58px)`,
+                  }}
+                  filter="url(#agentActiveRadarGlow)"
+                  className="pointer-events-none"
+                >
+                  {/* Expanding Ripple Ring 1 */}
+                  <circle
+                    r="24"
+                    fill="none"
+                    stroke="#FF0055"
+                    strokeWidth="3.5"
+                    className="animate-ping opacity-75"
+                  />
+                  {/* Expanding Ripple Ring 2 */}
+                  <circle
+                    r="40"
+                    fill="none"
+                    stroke="#FFE500"
+                    strokeWidth="2.5"
+                    strokeDasharray="4 4"
+                    className="animate-pulse"
+                  />
+                  {/* Core Pin Center */}
+                  <circle r="7" fill="#FF0055" stroke="#FFFFFF" strokeWidth="2.5" />
+                  <circle r="3" fill="#FFFFFF" />
+                  {/* Floating AI Agent Pin Label */}
+                  <g transform="translate(0, -32)">
+                    <rect
+                      x="-54"
+                      y="-12"
+                      width="108"
+                      height="24"
+                      rx="12"
+                      fill="#1C1917"
+                      stroke="#FF0055"
+                      strokeWidth="1.5"
+                      opacity="0.92"
+                    />
+                    <text
+                      x="0"
+                      y="4"
+                      textAnchor="middle"
+                      fill="#FFFFFF"
+                      className="text-[10px] font-mono font-bold tracking-tight"
+                    >
+                      AI ಗಮನಿಸಿದ ಸ್ಥಳ
+                    </text>
+                  </g>
+                </g>
+              )}
             </g>
           </svg>
         )}
       </div>
 
-      {/* Glassmorphic Card Overlay for 2-3 District Region Phrases (All Kannada UI) */}
-      {activeRegionData && (
-        <aside
-          role="dialog"
-          aria-modal="true"
-          className="glass-overlay-modal fixed inset-y-2 sm:inset-y-4 right-2 sm:right-6 w-[96vw] sm:w-[480px] lg:w-[560px] max-w-[96vw] z-50 backdrop-blur-2xl bg-white/75 sm:bg-white/60 border border-white/80 shadow-[0_24px_60px_rgba(0,0,0,0.22)] rounded-2xl sm:rounded-3xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-8 duration-300"
-        >
-          {/* Card Header */}
-          <div className="p-3.5 sm:p-5 border-b border-white/60 bg-white/60 backdrop-blur-md flex items-start justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span
-                  className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full shadow-sm ring-2 ring-black shrink-0"
-                  style={{ backgroundColor: activeRegionData.highlightHex }}
-                />
-                <span className="text-[11px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full border bg-amber-100 text-stone-900 border-amber-300 shadow-sm">
-                  {activeRegionData.name}
-                </span>
-                {clickedDistrict && (
-                  <span className="text-[10px] sm:text-[11px] text-stone-900 bg-white/90 px-2 sm:px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 border border-stone-300 shadow-sm">
-                    <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-600" />
-                    {KANNADA_DISTRICT_NAMES[clickedDistrict] || clickedDistrict}
-                  </span>
-                )}
-              </div>
-              <h2 className="font-serif text-lg sm:text-2xl font-bold text-stone-900 mt-1.5 sm:mt-2">
-                {activeRegionData.nameKannada}
-              </h2>
-              <p className="text-[11px] sm:text-xs text-stone-800 mt-1 leading-relaxed">
-                {activeRegionData.description}
-              </p>
-              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-stone-700 font-medium">
-                <span className="font-bold text-stone-900">ಜಿಲ್ಲೆಗಳು: </span>
-                {activeRegionData.districts.join(" • ")}
-              </div>
-            </div>
-
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setActiveRegionData(null)}
-              className="p-1 sm:p-1.5 rounded-xl text-stone-700 hover:text-stone-950 hover:bg-white/80 transition-all hover:scale-105 active:scale-95 shrink-0"
-              title="ಮುಚ್ಚಿರಿ"
-              aria-label="ಮುಚ್ಚಿರಿ"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-
-          {/* Matrix Header Columns */}
-          <div className="px-3.5 sm:px-5 py-2 bg-white/70 backdrop-blur-md border-b border-white/50 grid grid-cols-2 gap-2 sm:gap-3 text-[11px] sm:text-xs font-bold text-stone-800 tracking-wider">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span>📖 ಪಠ್ಯ ಪುಸ್ತಕ</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-1.5 text-red-700">
-              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 animate-spin" />
-              <span>🗣️ ಆಡುಮಾತು</span>
-            </div>
-          </div>
-
-          {/* 10 Sentences Comparison Matrix */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 drawer-scrollbar">
-            {isLoadingSentences ? (
-              <div className="p-8 text-center text-sm font-serif text-stone-700">
-                ವಾಕ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...
-              </div>
-            ) : (
-              activeRegionData.phrases.map((item, index) => {
-                const isPlayingRegional = playingSentenceText === item.regional;
-                const isPlayingTextbook = playingSentenceText === item.textbook;
-
-                return (
-                  <div
-                    key={index}
-                    className="p-3.5 rounded-2xl bg-white/85 border border-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:bg-white transition-all duration-150"
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* Left: Standard Textbook Kannada */}
-                      <div className="flex flex-col justify-between p-2.5 rounded-xl bg-stone-50/95 border border-stone-200">
-                        <div>
-                          <span className="text-[10px] font-bold text-stone-700">
-                            ಪ್ರಮಾಣಿತ ರೂಪ
-                          </span>
-                          <p className="font-serif text-sm font-semibold text-stone-950 mt-1 leading-snug">
-                            {item.textbook}
-                          </p>
-                        </div>
-                        <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-stone-200">
-                          <span className="text-[10px] text-stone-600">
-                            ಪಠ್ಯಪುಸ್ತಕ
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => playSentence(item.textbook)}
-                            className={`p-1.5 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
-                              isPlayingTextbook
-                                ? "bg-red-600 text-white shadow-md"
-                                : "text-stone-800 hover:text-black hover:bg-stone-200"
-                            }`}
-                            title="ಉಚ್ಚಾರಣೆಯನ್ನು ಆಲಿಸಿ"
-                          >
-                            {isPlayingTextbook ? (
-                              <Volume2 className="w-3.5 h-3.5 animate-bounce" />
-                            ) : (
-                              <Play className="w-3.5 h-3.5 fill-current" />
-                            )}
-                            <span className="text-[10px]">ಆಲಿಸಿ</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Right: Regional Slang / Dialect */}
-                      <div className="flex flex-col justify-between p-2.5 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-300 shadow-sm">
-                        <div>
-                          <span className="text-[10px] font-bold text-amber-950">
-                            ಪ್ರಾದೇಶಿಕ ಶೈಲಿ
-                          </span>
-                          <p className="font-serif text-sm font-bold text-amber-950 mt-1 leading-snug">
-                            {item.regional}
-                          </p>
-                        </div>
-                        <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-amber-200">
-                          <span className="text-[10px] text-amber-900 font-medium">
-                            ಆಡುಮಾತು
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => playSentence(item.regional)}
-                            className={`p-1.5 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
-                              isPlayingRegional
-                                ? "bg-red-600 text-white shadow-md"
-                                : "bg-gradient-to-r from-amber-200 to-amber-300 text-stone-950 hover:from-amber-300 hover:to-amber-400 shadow-sm"
-                            }`}
-                            title="ಉಚ್ಚಾರಣೆಯನ್ನು ಆಲಿಸಿ"
-                          >
-                            {isPlayingRegional ? (
-                              <Volume2 className="w-3.5 h-3.5 animate-bounce" />
-                            ) : (
-                              <Play className="w-3.5 h-3.5 fill-current" />
-                            )}
-                            <span className="text-[10px]">ಆಲಿಸಿ</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* English Meaning Footer (Retained as requested) */}
-                    <div className="mt-2 pt-2 border-t border-stone-200 flex items-center gap-1.5 text-[11px] text-stone-700">
-                      <ChevronRight className="w-3 h-3 text-red-600 shrink-0" />
-                      <span className="font-bold text-stone-900">Meaning:</span>
-                      <span>{item.meaning}</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Footer note in Kannada */}
-          <div className="p-3 bg-white/80 border-t border-stone-200 text-center text-[11px] text-stone-700 font-medium">
-            ಪ್ರಾದೇಶಿಕ ಭಾಷಾ ವೈವಿಧ್ಯತೆಯ ದತ್ತಾಂಶ • ಬ್ರೌಸರ್ ಧ್ವನಿ ಸೌಲಭ್ಯ (kn-IN)
-          </div>
-        </aside>
-      )}
+      {/* 3D Glassmorphic Bento Box Overlay with Dynamic Full-screen Backgrounds */}
+      <RegionBentoOverlay
+        activeRegionData={activeRegionData}
+        clickedDistrict={clickedDistrict}
+        clickOrigin={clickOrigin}
+        isLoadingSentences={isLoadingSentences}
+        playingSentenceText={playingSentenceText}
+        onPlaySentence={playSentence}
+        onClose={() => {
+          setActiveRegionData(null);
+          setClickedDistrict(null);
+          setClickOrigin(null);
+          dispatchMapDistrictSelect({ district: null, regionCode: null });
+        }}
+        onSelectDistrict={(districtName, regionCode) => {
+          handleDistrictClick(districtName, regionCode);
+        }}
+      />
     </div>
   );
 }

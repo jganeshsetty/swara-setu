@@ -1,11 +1,12 @@
-import importlib
 import os
 import re
 import sys
+from typing import Optional, List, Dict, Any, Tuple
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
 from pydantic import BaseModel
 
 # Set UTF-8 encoding for standard output on Windows
@@ -16,52 +17,16 @@ if sys.platform == "win32":
     except Exception as encoding_err:
         print(f"Notice: stdout encoding reconfigure: {encoding_err}")
 
-# Load optional .env file if available
+# Load .env file
 load_dotenv()
 
-# ==============================================================================
-# === NVIDIA NIM LLM CONFIGURATION ===
-# ==============================================================================
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
-NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1").strip()
-NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "meta/llama-3.1-70b-instruct").strip()
-
-# Hugging Face Access Token (optional fallback)
-HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN", "")
-if HF_TOKEN:
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
-
-
 from langchain_community.vectorstores import Chroma
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint
-
-# Resolve chain functions across LangChain versions without IDE import squiggles
-create_retrieval_chain = None
-create_stuff_documents_chain = None
-
-for _mod_name in ("langchain_classic.chains", "langchain.chains"):
-    try:
-        _mod = importlib.import_module(_mod_name)
-        create_retrieval_chain = getattr(_mod, "create_retrieval_chain", None)
-        if create_retrieval_chain:
-            break
-    except ModuleNotFoundError:
-        pass
-
-for _mod_name in ("langchain_classic.chains.combine_documents", "langchain.chains.combine_documents"):
-    try:
-        _mod = importlib.import_module(_mod_name)
-        create_stuff_documents_chain = getattr(_mod, "create_stuff_documents_chain", None)
-        if create_stuff_documents_chain:
-            break
-    except ModuleNotFoundError:
-        pass
+from langchain_huggingface import HuggingFaceEmbeddings
 
 app = FastAPI(
     title="Swara-Setu Kannada RAG API",
-    description="Hugging Face powered RAG Agent for Karnataka Kannada Dialects",
-    version="1.0.0",
+    description="Multilingual Hybrid RAG Agent for Karnataka Regional Kannada Dialects",
+    version="2.1.0",
 )
 
 # Enable CORS for Next.js frontend or any client
@@ -74,272 +39,447 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
 CHROMA_DIR = os.path.join(BASE_DIR, "chroma_db")
+DATASET_CSV = os.path.join(PROJECT_ROOT, "final_best_kannada_rag_dataset.csv")
 
-print("Loading Hugging Face Embeddings...")
+print("Loading Master Kannada Dataset for Hybrid Search...")
+df_dataset = pd.read_csv(DATASET_CSV)
+print(f"Master dataset loaded: {len(df_dataset)} records.")
+
+print("Loading Multilingual Hugging Face Embeddings ('paraphrase-multilingual-MiniLM-L12-v2')...")
 embeddings = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
 
-print("Connecting to ChromaDB...")
-# ChromaDB populated with 350 dialect and paragraph entries from both CSVs
+print("Connecting to ChromaDB collection...")
 vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
-retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+doc_count = vectorstore._collection.count()
+print(f"ChromaDB connected successfully. Total indexed documents: {doc_count}")
 
-hf_llm = None
-if HF_TOKEN:
-    try:
-        print("Initializing Hugging Face LLM...")
-        hf_llm = HuggingFaceEndpoint(
-            repo_id="mistralai/Mistral-7B-Instruct-v0.3",
-            task="text-generation",
-            max_new_tokens=512,
-            temperature=0.3,
-            repetition_penalty=1.03,
-            huggingfacehub_api_token=HF_TOKEN,
-            timeout=5,
-        )
-    except Exception as llm_init_err:
-        print(f"Warning: HuggingFaceEndpoint initialization: {llm_init_err}")
-else:
-    print("No HF_TOKEN provided. Running in pure offline local RAG mode.")
+# ---------------------------------------------------------------------------
+# Region and District Metadata Mapping for Pre-Filtering
+# ---------------------------------------------------------------------------
+REGION_METADATA_MAP: Dict[str, str] = {
+    # Dharwad / Hubballi Heartland
+    "dharwad": "Dharwad-labelled (source dataset label)",
+    "ಧಾರವಾಡ": "Dharwad-labelled (source dataset label)",
+    "hubballi": "Dharwad-labelled (source dataset label)",
+    "hubli": "Dharwad-labelled (source dataset label)",
+    "ಹುಬ್ಬಳ್ಳಿ": "Dharwad-labelled (source dataset label)",
+    "gadag": "Dharwad-labelled (source dataset label)",
+    "ಗದಗ": "Dharwad-labelled (source dataset label)",
+    "haveri": "Dharwad-labelled (source dataset label)",
+    "ಹಾವೇರಿ": "Dharwad-labelled (source dataset label)",
+    "hubballi_heartland": "Dharwad-labelled (source dataset label)",
+    "ಮಧ್ಯ ಕರ್ನಾಟಕ ವಾಣಿಜ್ಯ ಸೀಮೆ": "ಮಧ್ಯ ಕರ್ನಾಟಕ ವಾಣಿಜ್ಯ ಸೀಮೆ",
 
-# Instruct the model to use the context
-prompt = ChatPromptTemplate.from_template("""
-You are Swara-Setu, a helpful assistant. Answer the user's question in Kannada using ONLY the provided context below. If the answer is not in the context, say "I do not have information on that in my database."
+    # Uttara Kalyana (Bidar, Kalaburagi, Yadgir)
+    "uttara_kalyana": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಉತ್ತರ ಕಲ್ಯಾಣ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "bidar": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಬೀದರ್": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "kalaburagi": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "gulbarga": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಕಲಬುರಗಿ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "yadgir": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಯಾದಗಿರಿ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
 
-Context:
-{context}
+    # Tungabhadra Belt (Raichur, Koppal, Ballari, Vijayanagara)
+    "tungabhadra_belt": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ತುಂಗಭದ್ರಾ ತೀರ": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "raichur": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ರಾಯಚೂರು": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "koppal": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ಕೊಪ್ಪಳ": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ballari": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "bellary": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ಬಳ್ಳಾರಿ": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "vijayanagara": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ವಿಜಯನಗರ": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "hampi": "ತುಂಗಭದ್ರಾ ತೀರ",
+    "ಹಂಪಿ": "ತುಂಗಭದ್ರಾ ತೀರ",
 
-Question:
-{input}
+    # Krishna Valley (Belagavi, Bagalkote, Vijayapura)
+    "krishna_valley": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "ಕೃಷ್ಣಾ ಕಣಿವೆ": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "belagavi": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "belgaum": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "ಬೆಳಗಾವಿ": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "bagalkote": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "ಬಾಗಲಕೋಟೆ": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "vijayapura": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "bijapur": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
+    "ವಿಜಯಪುರ": "ಕೃಷ್ಣಾ ಕಣಿವೆ",
 
-Answer (in Kannada):
-""")
+    # Karavali / Coastal (Mangaluru, Udupi, Karwar)
+    "karavali_coast": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಕರಾವಳಿ ಕರ್ನಾಟಕ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "coastal": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "mangaluru": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "mangalore": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಮಂಗಳೂರು": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "udupi": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಉಡುಪಿ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "dakshina kannada": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ದಕ್ಷಿಣ ಕನ್ನಡ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "uttara kannada": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಉತ್ತರ ಕನ್ನಡ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "karwar": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಕಾರವಾರ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
 
-rag_chain = None
-if hf_llm and create_retrieval_chain and create_stuff_documents_chain:
-    try:
-        document_chain = create_stuff_documents_chain(hf_llm, prompt)
-        rag_chain = create_retrieval_chain(retriever, document_chain)
-    except Exception as chain_init_err:
-        print(f"Notice: Chains initialization: {chain_init_err}")
+    # Malnad Ghats (Shivamogga, Chikkamagaluru, Kodagu)
+    "malnad_ghats": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಮಲೆನಾಡು ಗಿರಿಧಾಮ": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "shivamogga": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "shimoga": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಶಿವಮೊಗ್ಗ": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "chikkamagaluru": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಚಿಕ್ಕಮಗಳೂರು": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "kodagu": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "coorg": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಕೊಡಗು": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
 
+    # Bayalu Seeme (Davanagere, Chitradurga, Tumakuru)
+    "bayalu_seeme": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "davanagere": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "ದಾವಣಗೆರೆ": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "chitradurga": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "ಚಿತ್ರದುರ್ಗ": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "tumakuru": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "tumkur": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+    "ತುಮಕೂರು": "ಮಧ್ಯ ಬಯಲು ಸೀಮೆ",
+
+    # Kaveri Basin / Old Mysore (Mysuru, Mandya, Chamarajanagara)
+    "kaveri_basin": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "ಕಾವೇರಿ ಕಣಿವೆ": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "old mysore": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "ಹಳೇ ಮೈಸೂರು": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "mysuru": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "mysore": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "ಮೈಸೂರು": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "mandya": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "ಮಂಡ್ಯ": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "chamarajanagara": "ಕಾವೇರಿ ಕಣಿವೆ",
+    "ಚಾಮರಾಜನಗರ": "ಕಾವೇರಿ ಕಣಿವೆ",
+
+    # Dakshina Ghats / Southern Heartland (Hassan, Ramanagara)
+    "dakshina_ghats": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+    "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+    "hassan": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+    "ಹಾಸನ": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+    "ramanagara": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+    "ರಾಮನಗರ": "ದಕ್ಷಿಣ ಹೆಬ್ಬಾಗಿಲು",
+
+    # Eastern Plateau (Bengaluru, Kolar, Chikkaballapura)
+    "kolar_bengaluru": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "bengaluru": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "bangalore": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "ಬೆಂಗಳೂರು": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "kolar": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "ಕೋಲಾರ": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "chikkaballapura": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+    "ಚಿಕ್ಕಬಳ್ಳಾಪುರ": "ಪೂರ್ವ ಗಡಿ ಪ್ರಸ್ಥಭೂಮಿ",
+}
+
+STOPWORDS = {
+    "ಎಂದು", "ಅಂತ", "ಹೇಗೆ", "ಹ್ಯಾಂಗೆ", "ಹೇಳ್ತಾರೆ", "ಕೇಳ್ತಾರೆ", "ಅನ್ನೋದನ್ನ", "ಅನ್ನೋದನ್ನು",
+    "ಬಗ್ಗೆ", "ಶೈಲಿಯಲ್ಲಿ", "ಭಾಗದಲ್ಲಿ", "ತಿಳಿಸಿ", "ಹೇಳಿ", "ಅರ್ಥ", "ಏನು", "ಕನ್ನಡದಲ್ಲಿ",
+    "ಮಾಡುತ್ತದೆ", "ಅಂದರೆ", "ಅಂದ್ರೆ", "ರೀತಿಯಲ್ಲಿ", "ಕಡೆ", "ಕುರಿತು", "ಕೇಳುತ್ತಾರೆ", "ಹೇಳುತ್ತಾರೆ",
+    "ಅಂತಾರೆ", "ಕೇಳಿ", "ನೋಡಿ", "ರೂಪ", "ವಾಕ್ಯ", "ಮತ್ತು", "ಹಾಗೂ", "ಇದು", "ಅದು", "ಇವು"
+}
 
 class UserQuery(BaseModel):
     question: str
+    region: Optional[str] = None
+    district: Optional[str] = None
 
 
-def generate_direct_rag_kannada_response(query: str, docs: list) -> str:
+def extract_query_features(raw_query: str, region_arg: Optional[str] = None, district_arg: Optional[str] = None) -> dict:
     """
-    Conversational RAG synthesis: Formats retrieved Kannada dialect knowledge
-    into natural, polite, human-like spoken Kannada (speech and chat friendly).
-    Guarantees no cross-sentence contamination.
+    Sanitizes conversational wrappers from user queries to extract:
+    1. Target region (from args or query text)
+    2. Quoted target phrases (e.g. "ನಾನು ನಿನ್ನೆ ಶಾಲೆಗೆ ಹೋಗಿದ್ದೆ" or 'ಭಾಳ')
+    3. Cleaned core semantic text
+    4. Key search tokens
     """
-    if not docs:
-        return "ಕ್ಷಮಿಸಿ, ಈ ಬಗ್ಗೆ ನನ್ನಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ಬೇರೆ ಯಾವುದೇ ಪ್ರಾದೇಶಿಕ ಕನ್ನಡ ಪದ ಅಥವಾ ವಾಕ್ಯದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!"
+    target_region = None
+    candidates = []
+    if district_arg:
+        candidates.append(district_arg.strip().lower())
+    if region_arg:
+        candidates.append(region_arg.strip().lower())
 
-    # Parse structured information and keep track of document metadata
-    matched_items = []
-    for d in docs:
-        content = d.page_content
-        meta = getattr(d, "metadata", {}) or {}
-
-        reg_match = re.search(r"ಪ್ರಾದೇಶಿಕ (?:ಉಪಭಾಷೆ|ಕನ್ನಡ ರೂಪ) \(([^)]+)\):\s*([^\n\r]+)", content)
-        std_match = re.search(r"(?:ಪ್ರಮಾಣಿತ ಕನ್ನಡ|ವಾಕ್ಯ)[^:]*:\s*([^\n\r]+)", content)
-        meaning_match = re.search(r"(?:ಇಂಗ್ಲಿಷ್ ಅರ್ಥ|English)[^:]*:\s*([^\n\r]+)", content)
-        theme_match = re.search(r"ವಿಷಯ \(Theme\):\s*([^\n\r]+)", content)
-
-        if reg_match:
-            region_str = reg_match.group(1).strip()
-            # Clean region name for spoken speech (e.g. "ಉತ್ತರ ಕಲ್ಯಾಣ" instead of long district list)
-            region_clean = region_str.split("-")[0].split("(")[0].strip()
-            matched_items.append({
-                "region_full": region_str,
-                "region_clean": region_clean,
-                "regional": reg_match.group(2).strip(),
-                "standard": std_match.group(1).strip() if std_match else "",
-                "meaning": meaning_match.group(1).strip() if meaning_match else "",
-                "theme": theme_match.group(1).strip() if theme_match else "",
-                "sentence_id": str(meta.get("sentence_id", "")),
-                "paragraph_id": str(meta.get("paragraph_id", "")),
-            })
-
-    if not matched_items:
-        clean_first = docs[0].page_content.replace("•", "").replace(":", " - ")
-        return f"ಹೌದು, ನೀವು ಕೇಳಿದ ವಿಷಯದ ಬಗ್ಗೆ ನಮ್ಮ ದತ್ತಾಂಶದಲ್ಲಿ ಹೀಗಿದೆ:\n\n{clean_first}"
-
-    # 1. Determine the best match based on user query
-    selected = matched_items[0]
-
-    # Region/district keywords mapping (Kannada & English)
-    DISTRICT_MAP = {
-        "ಧಾರವಾಡ": "Dharwad", "ಗದಗ": "Gadag", "ಹಾವೇರಿ": "Haveri",
-        "ಬೀದರ್": "Bidar", "ಕಲಬುರಗಿ": "Kalaburagi", "ಯಾದಗಿರಿ": "Yadgir",
-        "ರಾಯಚೂರು": "Raichur", "ಕೊಪ್ಪಳ": "Koppal", "ಬಳ್ಳಾರಿ": "Ballari", "ವಿಜಯನಗರ": "Vijayanagara",
-        "ಬೆಳಗಾವಿ": "Belagavi", "ಬಾಗಲಕೋಟೆ": "Bagalkote", "ವಿಜಯಪುರ": "Vijayapura",
-        "ಉಡುಪಿ": "Udupi", "ಮಂಗಳೂರು": "Mangaluru", "ದಕ್ಷಿಣ ಕನ್ನಡ": "Dakshina Kannada", "ಉತ್ತರ ಕನ್ನಡ": "Uttara Kannada",
-        "ಶಿವಮೊಗ್ಗ": "Shivamogga", "ಚಿಕ್ಕಮಗಳೂರು": "Chikkamagaluru", "ಕೊಡಗು": "Kodagu",
-        "ದಾವಣಗೆರೆ": "Davanagere", "ಚಿತ್ರದುರ್ಗ": "Chitradurga", "ತುಮಕೂರು": "Tumakuru",
-        "ಮೈಸೂರು": "Mysuru", "ಮಂಡ್ಯ": "Mandya", "ಚಾಮರಾಜನಗರ": "Chamarajanagara",
-        "ಹಾಸನ": "Hassan", "ರಾಮನಗರ": "Ramanagara",
-        "ಬೆಂಗಳೂರು": "Bengaluru", "ಕೋಲಾರ": "Kolar",
-    }
-
-    # Find if any district or region keyword is in user query
-    target_tokens = []
-    for kn_word, en_word in DISTRICT_MAP.items():
-        if kn_word in query or en_word.lower() in query.lower():
-            target_tokens.extend([kn_word, en_word])
-
-    for item in matched_items:
-        full_text = item["region_full"] + " " + item["region_clean"]
-        if any(tok.lower() in full_text.lower() for tok in target_tokens):
-            selected = item
+    for c in candidates:
+        if c in REGION_METADATA_MAP:
+            target_region = REGION_METADATA_MAP[c]
             break
-        elif item["region_clean"] in query:
-            selected = item
-            break
+        for exact_reg in REGION_METADATA_MAP.values():
+            if c == exact_reg.lower():
+                target_region = exact_reg
+                break
 
-    # 2. Find siblings that belong to the EXACT same sentence / paragraph
-    same_sentence_siblings = []
-    has_id = bool(selected["sentence_id"] or selected["paragraph_id"])
+    q_lower = raw_query.lower()
+    if not target_region:
+        for kw, reg_name in REGION_METADATA_MAP.items():
+            if kw in q_lower:
+                target_region = reg_name
+                break
 
-    for item in matched_items:
-        if item == selected:
-            continue
-        if has_id:
-            # Strictly match sentence_id or paragraph_id
-            if selected["sentence_id"] and item["sentence_id"] == selected["sentence_id"]:
-                same_sentence_siblings.append(item)
-            elif selected["paragraph_id"] and item["paragraph_id"] == selected["paragraph_id"]:
-                same_sentence_siblings.append(item)
-        else:
-            # Fallback comparison by standard phrase equality
-            if selected["standard"] and item["standard"] == selected["standard"]:
-                same_sentence_siblings.append(item)
+    # Extract quoted string if present
+    quoted_match = re.search(r'["\']([^"\']+)["\']', raw_query)
+    quoted_phrase = quoted_match.group(1).strip() if quoted_match else ""
 
-    # De-duplicate siblings by region
-    unique_siblings = []
-    seen_regions = {selected["region_clean"]}
-    for sib in same_sentence_siblings:
-        if sib["region_clean"] not in seen_regions:
-            seen_regions.add(sib["region_clean"])
-            unique_siblings.append(sib)
+    # Clean conversational wrappers
+    clean = raw_query
+    clean = re.sub(r'["\']([^"\']+)["\']', r' \1 ', clean)
+    clean = re.sub(r'(?:ಅನ್ನೋದನ್ನ|ಅನ್ನೋದನ್ನು|ಎಂದು|ಅಂತ|ಬಗ್ಗೆ|ಕುರಿತು)\s+.*?(?:ಹೇಗೆ|ಹ್ಯಾಂಗೆ|ಹೇಳ್ತಾರೆ|ಕೇಳ್ತಾರೆ|ನುಡಿತಾರೆ|ಅರ್ಥ|ಏನು)\??', ' ', clean)
+    clean = re.sub(r'(?:ಶೈಲಿಯಲ್ಲಿ|ಭಾಗದಲ್ಲಿ|ಕಡೆ|ರೀತಿಯಲ್ಲಿ|ಉಪಭಾಷೆಯಲ್ಲಿ|ಕನ್ನಡದಲ್ಲಿ)\s+.*', ' ', clean)
 
-    # 3. Construct natural, conversational spoken Kannada response
-    is_meaning_query = any(k in query for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಏನು"])
-    is_region_query = any(k in query for k in ["ಹೇಗೆ", "ಹ್ಯಾಂಗೆ", "ಹೇಳ್ತಾರೆ", "ಶೈಲಿ", "ರೂಪ"])
+    for kw in REGION_METADATA_MAP.keys():
+        clean = re.sub(rf'\b{re.escape(kw)}\b', ' ', clean, flags=re.IGNORECASE)
+    for sw in STOPWORDS:
+        clean = re.sub(rf'\b{re.escape(sw)}\b', ' ', clean)
 
-    spoken_parts = []
+    clean = re.sub(r'[^\u0C80-\u0CFF\w\s]', ' ', clean)
+    clean = re.sub(r'\s+', ' ', clean).strip()
 
-    if is_meaning_query and selected["meaning"]:
-        spoken_parts.append(
-            f'"{selected["regional"]}" ಅಂದರೆ "{selected["meaning"]}" ಅಂತ ಅರ್ಥ. '
-            f'ಇದನ್ನು {selected["region_clean"]} ಭಾಗದಲ್ಲಿ ಸಾಮಾನ್ಯವಾಗಿ ಬಳಸುತ್ತಾರೆ.'
-        )
-        if selected["standard"]:
-            spoken_parts.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{selected["standard"]}" ಎಂದು ಹೇಳಬಹುದು.')
-    elif is_region_query:
-        spoken_parts.append(
-            f'ಹೌದು! {selected["region_clean"]} ಭಾಗದಲ್ಲಿ ಇದನ್ನು "{selected["regional"]}" ಅಂತ ಹೇಳ್ತಾರೆ.'
-        )
-        if selected["standard"]:
-            spoken_parts.append(f'(ಪ್ರಮಾಣಿತ ಕನ್ನಡ ರೂಪ: "{selected["standard"]}")')
-        if selected["meaning"]:
-            spoken_parts.append(f'ಅರ್ಥ: {selected["meaning"]}.')
-    else:
-        spoken_parts.append(
-            f'ಖಂಡಿತ! {selected["region_clean"]} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{selected["regional"]}" ಅಂತ ಮಾತಾಡ್ತಾರೆ.'
-        )
-        if selected["standard"]:
-            spoken_parts.append(f'ಸಾಮಾನ್ಯವಾಗಿ ನಾವು "{selected["standard"]}" ಅಂತೀವಲ್ಲ, ಅದೇ ಇದು.')
-        if selected["meaning"]:
-            spoken_parts.append(f'ಅರ್ಥ: {selected["meaning"]}.')
+    core_phrase = quoted_phrase if quoted_phrase else clean
+    if not core_phrase:
+        core_phrase = raw_query
 
-    # Conversational comparison with other regions (ONLY for the exact same sentence!)
-    if unique_siblings:
-        spoken_parts.append("\nಇದೇ ಮಾತನ್ನು ಇತರ ಭಾಗಗಳಲ್ಲಿ ಹೀಗೆ ಹೇಳ್ತಾರೆ:")
-        for sib in unique_siblings[:3]:
-            spoken_parts.append(f'• {sib["region_clean"]} ಕಡೆ: "{sib["regional"]}"')
+    # Extract whole Kannada tokens (min length 2)
+    tokens = [w for w in re.findall(r'[\u0C80-\u0CFF\w]+', core_phrase) if len(w) >= 2 and w not in STOPWORDS]
 
-    return "\n".join(spoken_parts)
-
-
-def call_nvidia_llm(messages: list, max_tokens: int = 500, temperature: float = 0.3) -> str:
-    """
-    Direct HTTP inference to NVIDIA NIM API with robust timeouts.
-    Works seamlessly without needing extra package dependencies.
-    """
-    if not NVIDIA_API_KEY or NVIDIA_API_KEY.startswith("your_nvidia"):
-        return ""
-
-    headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": NVIDIA_MODEL,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
+    return {
+        "raw": raw_query,
+        "quoted": quoted_phrase,
+        "core": core_phrase,
+        "tokens": tokens,
+        "region": target_region,
     }
 
+
+def hybrid_retrieve(features: dict) -> Tuple[Optional[str], Optional[dict], float, str]:
+    """
+    Hybrid Retrieval Engine:
+    Level 1: Exact quoted phrase matching (e.g. "ನಾನು ನಿನ್ನೆ ಶಾಲೆಗೆ ಹೋಗಿದ್ದೆ" or 'ಭಾಳ')
+    Level 2: Exact core phrase matching in target region
+    Level 3: Whole-word token overlap matching
+    Level 4: ChromaDB semantic vector search (fallback with distance guard)
+    """
+    quoted = features["quoted"]
+    core = features["core"]
+    tokens = features["tokens"]
+    target_region = features["region"]
+
+    sub_df = df_dataset
+    if target_region:
+        reg_df = df_dataset[df_dataset["region_name"] == target_region]
+        if len(reg_df) > 0:
+            sub_df = reg_df
+
+    # 1. Exact quoted search
+    if quoted:
+        m = sub_df[sub_df["retrieval_text"].str.contains(re.escape(quoted), na=False)]
+        if len(m) > 0:
+            row = m.iloc[0]
+            return row["retrieval_text"], {"region_name": row.get("region_name", "")}, 1.0, "exact_quoted"
+        m_all = df_dataset[df_dataset["retrieval_text"].str.contains(re.escape(quoted), na=False)]
+        if len(m_all) > 0:
+            row = m_all.iloc[0]
+            return row["retrieval_text"], {"region_name": row.get("region_name", "")}, 0.95, "exact_quoted_cross_region"
+
+    # 2. Exact core phrase search
+    if core and len(core) >= 3:
+        m = sub_df[sub_df["retrieval_text"].str.contains(re.escape(core), na=False)]
+        if len(m) > 0:
+            row = m.iloc[0]
+            return row["retrieval_text"], {"region_name": row.get("region_name", "")}, 0.9, "exact_core"
+
+    # 3. High token overlap with whole Kannada word boundary matching
+    if tokens:
+        def token_score(text):
+            cnt = 0
+            for t in tokens:
+                pattern = rf"(?<![\u0C80-\u0CFF]){re.escape(t)}(?![\u0C80-\u0CFF])"
+                if re.search(pattern, text):
+                    cnt += 1
+            return cnt
+
+        scores = sub_df["retrieval_text"].apply(token_score)
+        max_score = scores.max()
+        min_required = len(tokens) if len(tokens) <= 2 else max(2, int(len(tokens) * 0.5))
+        if max_score >= min_required and max_score > 0:
+            best_idx = scores.idxmax()
+            row = sub_df.loc[best_idx]
+            return row["retrieval_text"], {"region_name": row.get("region_name", "")}, 0.85, "token_overlap"
+
+    # 4. Dense Vector Search with ChromaDB
     try:
-        import requests
-        url = f"{NVIDIA_BASE_URL.rstrip('/')}/chat/completions"
-        res = requests.post(url, headers=headers, json=payload, timeout=25)
-        if res.status_code == 200:
-            data = res.json()
-            choice = data["choices"][0]
-            msg = choice.get("message", {})
-            text = (msg.get("content") or msg.get("reasoning_content") or msg.get("reasoning") or "").strip()
-            return text
+        search_filter = {"region_name": target_region} if target_region else None
+        res = vectorstore.similarity_search_with_score(core or features["raw"], k=3, filter=search_filter)
+        if not res and search_filter:
+            res = vectorstore.similarity_search_with_score(core or features["raw"], k=3)
+
+        if res:
+            best_doc, score = res[0]
+            # Calculate how many significant query tokens appear as whole words
+            matched_tokens = [
+                t for t in tokens
+                if re.search(rf"(?<![\u0C80-\u0CFF]){re.escape(t)}(?![\u0C80-\u0CFF])", best_doc.page_content)
+            ]
+            min_matched = len(tokens) if len(tokens) <= 2 else max(2, int(len(tokens) * 0.5))
+            # Strictly reject out-of-domain queries like ISRO Mars mission or Quantum computing
+            if len(matched_tokens) >= min_matched and len(matched_tokens) > 0 and score < 14.0:
+                return best_doc.page_content, best_doc.metadata or {}, float(score), "chroma_dense"
+    except Exception as e:
+        print(f"Chroma search error: {e}")
+
+    return None, None, 0.0, "not_found"
+
+
+def parse_rag_document_content(content: str, meta: dict) -> Dict[str, str]:
+    """
+    Extracts structured dialect data from the pre-optimized `retrieval_text`.
+    """
+    region_meta = meta.get("region_name", "") or ""
+
+    # 1. Parallel sentence (Dharwad target)
+    m_par = re.search(r"Dharwad-labelled target form:\s*(.*?)(?:\.\.|\n|$)", content)
+    m_std1 = re.search(r"Bookish/standard Kannada source:\s*(.*?)(?:\.\.|\n|$)", content)
+    if m_par:
+        return {
+            "type": "parallel",
+            "region": "ಧಾರವಾಡ",
+            "regional": m_par.group(1).strip(),
+            "standard": m_std1.group(1).strip() if m_std1 else "",
+            "meaning": "",
+        }
+
+    # 2. Regional sentence / paragraph
+    m_reg = re.search(r"Regional Kannada example:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_std2 = re.search(r"Standard Kannada:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_mean2 = re.search(r"Meaning/context:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_proj2 = re.search(r"Project region:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    if m_reg:
+        return {
+            "type": "regional_sentence",
+            "region": m_proj2.group(1).strip() if m_proj2 else region_meta,
+            "regional": m_reg.group(1).strip(),
+            "standard": m_std2.group(1).strip() if m_std2 else "",
+            "meaning": m_mean2.group(1).strip() if m_mean2 else "",
+        }
+
+    # 3. Lexicon entry
+    m_lex = re.search(r"Regional or colloquial form:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_std3 = re.search(r"Standard Kannada:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_mean3 = re.search(r"English meaning:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    m_proj3 = re.search(r"Project region:\s*(.*?)(?:\.\.|\.|\n|$)", content)
+    if m_lex:
+        return {
+            "type": "lexicon",
+            "region": m_proj3.group(1).strip() if m_proj3 else region_meta,
+            "regional": m_lex.group(1).strip(),
+            "standard": m_std3.group(1).strip() if m_std3 else "",
+            "meaning": m_mean3.group(1).strip() if m_mean3 else "",
+        }
+
+    # 4. Corpus / generic snippet
+    clean_text = content.replace("Bookish/standard Kannada source:", "").replace("Kannada text:", "").strip()
+    return {
+        "type": "corpus",
+        "region": region_meta or "ಕರ್ನಾಟಕ",
+        "regional": clean_text,
+        "standard": "",
+        "meaning": "",
+    }
+
+
+def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Optional[str] = None) -> dict:
+    """
+    High-Precision Grounded Kannada RAG Pipeline:
+    1. Extracts intent, quoted phrases, and active region filter.
+    2. Executes Hybrid Retrieval (Lexical exact + Whole-word token overlap + Chroma Dense).
+    3. Relevance Guard: If confidence < 0.6 or query is out-of-domain (e.g., ISRO, Quantum),
+       gracefully abstains to prevent hallucinations.
+    4. Formats a 2-3 sentence spoken Kannada response for Voice TTS.
+    """
+    features = extract_query_features(user_q, region, district)
+    doc_content, doc_meta, score, method = hybrid_retrieve(features)
+
+    # RELEVANCE GUARD: Graceful abstention for out-of-domain or ungrounded queries
+    if not doc_content or score < 0.6:
+        return {
+            "answer": "ಕ್ಷಮಿಸಿ, ಈ ನಿರ್ದಿಷ್ಟ ವಾಕ್ಯದ ಬಗ್ಗೆ ನನ್ನ ದತ್ತಾಂಶದಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ದಿನನಿತ್ಯದ ಮಾತುಕತೆ, ಮಾರುಕಟ್ಟೆ, ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!",
+            "source": "relevance_guard_abstain",
+            "score": float(score),
+            "region_filtered": features["region"],
+            "method": method,
+        }
+
+    parsed = parse_rag_document_content(doc_content, doc_meta or {})
+    if not parsed:
+        return {
+            "answer": "ಕ್ಷಮಿಸಿ, ಈ ನಿರ್ದಿಷ್ಟ ವಾಕ್ಯದ ಬಗ್ಗೆ ನನ್ನ ದತ್ತಾಂಶದಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ದಿನನಿತ್ಯದ ಮಾತುಕತೆ, ಮಾರುಕಟ್ಟೆ, ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!",
+            "source": "relevance_guard_unparsed",
+            "score": float(score),
+            "region_filtered": features["region"],
+            "method": method,
+        }
+
+    region_display = parsed["region"] or features["region"] or "ಕರ್ನಾಟಕ"
+    if "Dharwad" in region_display:
+        region_display = "ಧಾರವಾಡ"
+
+    is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು"])
+
+    sentences: List[str] = []
+
+    if parsed["type"] == "lexicon":
+        if is_meaning_query and parsed["meaning"]:
+            sentences.append(f'"{parsed["regional"]}" ಎಂದರೆ "{parsed["meaning"]}" ಅಂತ ಅರ್ಥ.')
+            sentences.append(f'{region_display} ಭಾಗದಲ್ಲಿ ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಬಳಸುತ್ತಾರೆ.')
+            if parsed["standard"]:
+                sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನುತ್ತಾರೆ.')
         else:
-            print(f"[NVIDIA NIM Error {res.status_code}]: {res.text}")
-            return ""
-    except Exception as err:
-        print(f"[NVIDIA NIM Exception]: {err}")
-        return ""
+            sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
+            if parsed["standard"]:
+                sentences.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}".')
+            if parsed["meaning"]:
+                sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
 
+    elif parsed["type"] in ("regional_sentence", "parallel"):
+        sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
+        if parsed["standard"]:
+            sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.')
+        if parsed["meaning"]:
+            sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
 
-def generate_nvidia_intelligent_dialect_response(query: str, retrieved_context: str = "") -> str:
-    """
-    Uses NVIDIA LLM to synthesize an authentic, respectful, warm spoken Kannada answer.
-    If context is present, it grounds in it; if not, it acts as a linguistic expert
-    explaining authentic variations across Karnataka regions.
-    """
-    system_prompt = (
-        "You are Swara-Setu (ಸ್ವರಸೇತು), an authentic and respectful AI Kannada language assistant "
-        "documenting the diverse regional dialects of Karnataka (ಉತ್ತರ ಕರ್ನಾಟಕ, ಕರಾವಳಿ, ಮೈಸೂರು-ಮಂಡ್ಯ, "
-        "ಮಲೆನಾಡು, ಬೆಂಗಳೂರು).\n\n"
-        "Instructions:\n"
-        "1. Always reply in natural, polite spoken Kannada (ಕನ್ನಡ ಲಿಪಿಯಲ್ಲಿ ಉತ್ತರಿಸಿ).\n"
-        "2. If the user provides a sentence or asks how something is said, identify its tone/region, "
-        "explain its meaning simply, and show how other regions speak it (e.g. ಧಾರವಾಡ, ಮಂಗಳೂರು, ಮಂಡ್ಯ).\n"
-        "3. Write naturally as a human speaks — do NOT use robotic bullet points or excessive symbols.\n"
-        "4. If context from the database is provided, ground your facts in that context."
-    )
+    else:
+        # General corpus snippet
+        snippet = parsed["regional"][:120].strip()
+        sentences.append(f'ನಮ್ಮ ದತ್ತಾಂಶದ ಪ್ರಕಾರ: {snippet}.')
+        sentences.append('ಇದು ಪ್ರಾದೇಶಿಕ ಕನ್ನಡದ ಅಧಿಕೃತ ಬಳಕೆಯಾಗಿದೆ.')
 
-    user_prompt = f"User Query: {query}\n"
-    if retrieved_context:
-        user_prompt += f"\nRelevant Database Records:\n{retrieved_context}\n"
-    user_prompt += "\nPlease provide a warm, conversational spoken Kannada explanation:"
+    answer = " ".join(sentences[:3])
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
-
-    return call_nvidia_llm(messages)
+    return {
+        "answer": answer,
+        "source": f"rag_{method}",
+        "score": float(score),
+        "region_filtered": features["region"],
+        "method": method,
+    }
 
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
-        "service": "Swara-Setu Kannada RAG API",
-        "nvidia_enabled": bool(NVIDIA_API_KEY and not NVIDIA_API_KEY.startswith("your_nvidia")),
-        "nvidia_model": NVIDIA_MODEL,
+        "service": "Swara-Setu Multilingual Hybrid Kannada RAG API",
         "vector_count": vectorstore._collection.count(),
+        "dataset_records": len(df_dataset),
         "chroma_dir": CHROMA_DIR,
     }
 
@@ -349,50 +489,18 @@ from bhashini_service import bhashini_service
 
 class AudioQuery(BaseModel):
     audio_base64: str
+    region: Optional[str] = None
+    district: Optional[str] = None
 
 
 @app.get("/health")
 def health_check():
     return {
         "status": "ok",
-        "nvidia_configured": bool(NVIDIA_API_KEY and not NVIDIA_API_KEY.startswith("your_nvidia")),
         "bhashini_configured": bhashini_service.is_configured(),
         "vectors": vectorstore._collection.count(),
+        "dataset_records": len(df_dataset),
     }
-
-
-def query_rag_pipeline(user_q: str) -> dict:
-    """Internal core executor for the Kannada RAG pipeline."""
-    # 1. Retrieve the most relevant documents along with similarity distance
-    docs_with_scores = vectorstore.similarity_search_with_score(user_q, k=4)
-    best_doc, best_score = docs_with_scores[0] if docs_with_scores else (None, 999.0)
-
-    # Distance threshold: below 0.65 is high confidence match in database
-    is_database_match = best_score < 0.65
-    retrieved_docs = [d for d, s in docs_with_scores]
-
-    # 2. If NVIDIA API Key is configured, use the NVIDIA LLM for rich synthesis & fallback
-    if NVIDIA_API_KEY and not NVIDIA_API_KEY.startswith("your_nvidia"):
-        if is_database_match:
-            context_str = "\n---\n".join([d.page_content for d in retrieved_docs[:3]])
-            llm_response = generate_nvidia_intelligent_dialect_response(user_q, context_str)
-            if llm_response:
-                return {"answer": llm_response, "source": "nvidia_rag_grounded", "score": float(best_score)}
-        else:
-            llm_fallback = generate_nvidia_intelligent_dialect_response(user_q, "")
-            if llm_fallback:
-                return {"answer": llm_fallback, "source": "nvidia_dialect_fallback", "score": float(best_score)}
-
-    # 3. Direct RAG response fallback if NVIDIA key is not set or network fails
-    if is_database_match:
-        answer = generate_direct_rag_kannada_response(user_q, retrieved_docs)
-        return {"answer": answer, "source": "chromadb_rag_grounded", "score": float(best_score)}
-    else:
-        return {
-            "answer": "ಕ್ಷಮಿಸಿ, ಈ ನಿರ್ದಿಷ್ಟ ವಾಕ್ಯದ ಬಗ್ಗೆ ನನ್ನ ದತ್ತಾಂಶದಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ದಿನನಿತ್ಯದ ಮಾತುಕತೆ, ಮಾರುಕಟ್ಟೆ, ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!",
-            "source": "chromadb_unseen_threshold",
-            "score": float(best_score),
-        }
 
 
 @app.post("/ask")
@@ -402,7 +510,7 @@ async def ask_question(query: UserQuery):
         if not user_q:
             return {"error": "ಖಾಲಿ ಪ್ರಶ್ನೆಯನ್ನು ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ (Empty question)."}
 
-        result = query_rag_pipeline(user_q)
+        result = query_rag_pipeline(user_q, region=query.region, district=query.district)
         return result
 
     except Exception as e:
@@ -412,10 +520,10 @@ async def ask_question(query: UserQuery):
 @app.post("/api/voice-chat")
 async def voice_chat(audio_query: AudioQuery):
     """
-    Native Kannada Voice RAG:
+    Native Kannada Voice RAG with Regional Pre-Filtering:
     1. Base64 Audio -> Bhashini ASR -> Kannada Text
-    2. Kannada Text -> Native RAG Pipeline -> Kannada Answer Text
-    3. Kannada Answer Text -> Bhashini TTS -> Base64 Audio Response
+    2. Kannada Text + Region Filter -> Hybrid RAG Pipeline -> 2-3 Sentence Voice Answer
+    3. Voice Answer -> Bhashini TTS -> Base64 Audio Response
     """
     try:
         raw_audio = audio_query.audio_base64.strip()
@@ -444,18 +552,21 @@ async def voice_chat(audio_query: AudioQuery):
 
         print(f"[Voice Chat] User said in Kannada: {user_kannada_text}")
 
-        # Step 2: Feed directly to the existing Kannada RAG pipeline
-        rag_result = query_rag_pipeline(user_kannada_text)
+        # Step 2: Feed to Hybrid RAG pipeline with regional pre-filtering
+        rag_result = query_rag_pipeline(
+            user_kannada_text,
+            region=audio_query.region,
+            district=audio_query.district,
+        )
         answer_text = rag_result.get("answer", "")
 
-        # Clean answer text for TTS (strip bullets, asterisks, English labels)
+        # Clean answer text for TTS
         clean_tts_text = re.sub(r"[•*#_`]", "", answer_text)
         clean_tts_text = re.sub(r"\(.*?\)", "", clean_tts_text)
-        clean_tts_text = re.sub(r"(?:ಇಂಗ್ಲಿಷ್ ಅರ್ಥ|English).*$", "", clean_tts_text, flags=re.MULTILINE)
         clean_tts_text = re.sub(r"\s+", " ", clean_tts_text).strip()
 
         # Step 3: Text-to-Speech via Bhashini TTS
-        print(f"[Voice Chat] Converting RAG answer to Kannada speech with Bhashini...")
+        print("[Voice Chat] Converting RAG answer to Kannada speech with Bhashini...")
         audio_base64_response = bhashini_service.convert_text_to_speech(clean_tts_text or answer_text)
 
         return {
@@ -463,6 +574,7 @@ async def voice_chat(audio_query: AudioQuery):
             "answer": answer_text,
             "audio_response_base64": audio_base64_response,
             "source": rag_result.get("source", "rag_pipeline"),
+            "region_filtered": rag_result.get("region_filtered"),
         }
 
     except Exception as e:
