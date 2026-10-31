@@ -225,20 +225,7 @@ Use these prompts to test the live application:
 
 ---
 
-## 📋 9. Final Submission Checklist
-
-- [x] **Chosen only one problem statement**: Problem Statement 4 (Namma Kannada — Regional Language Explorer).
-- [x] **Public GitHub Repository**: Complete source code with organized commit history.
-- [x] **Clear README**: Covers Project Name, Problem Statement, Existing Systems vs Ours, Approach, Architecture, Tech Stack, and Setup.
-- [x] **Live Deployed Project URL**:
-  - Frontend: [https://swara-setu.vercel.app](https://swara-setu.vercel.app)
-  - Backend API: [https://swara-setu-backend-at52.onrender.com](https://swara-setu-backend-at52.onrender.com)
-- [x] **Presentation (PPT) outline**: Problem, Existing Gaps, Approach, Architecture, Demo Flow, and Future Scope.
-- [x] **No hardcoded secrets or API keys**: Clean environment variables via `.env.example`.
-
----
-
-## 🔮 10. Future Scope
+## 🔮 9. Future Scope
 
 1. **Expansion to 25+ Sub-Dialects**: Extending beyond the 10 zones to micro-dialects (e.g., Kundagannada, Havyaka, Halakki, Badaga, Soliga tribal Kannada).
 2. **Offline Mobile Companion (PWA)**: On-device quantized dialect transformer models for offline rural access.
