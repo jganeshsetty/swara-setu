@@ -414,11 +414,14 @@ def parse_rag_document_content(content: str, meta: dict) -> Dict[str, str]:
     m_par = re.search(r"Dharwad-labelled target form:\s*(.*?)(?:\.\.|\n|$)", content)
     m_std1 = re.search(r"Bookish/standard Kannada source:\s*(.*?)(?:\.\.|\n|$)", content)
     if m_par:
+        reg_text = re.sub(r'[\.\s]*Caveat:.*$', '', m_par.group(1)).strip()
+        std_raw = m_std1.group(1).strip() if m_std1 else ""
+        std_text = re.sub(r'[\.\s]*(?:Dharwad-labelled target form|Caveat):.*$', '', std_raw).strip()
         return {
             "type": "parallel",
             "region": "ಧಾರವಾಡ",
-            "regional": m_par.group(1).strip(),
-            "standard": m_std1.group(1).strip() if m_std1 else "",
+            "regional": reg_text,
+            "standard": std_text,
             "meaning": "",
         }
 
