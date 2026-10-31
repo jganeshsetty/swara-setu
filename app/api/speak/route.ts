@@ -112,18 +112,20 @@ export async function POST(req: NextRequest) {
 
     const cleanText = cleanKannadaText(rawText);
 
-    // 1. Try FastAPI backend if running (fastest in-memory streaming)
-    const backendUrl =
+    // 1. Try FastAPI backend if running (fastest in-memory streaming via service binding)
+    const backendBase =
       process.env.BACKEND_URL ||
       process.env.NEXT_PUBLIC_BACKEND_URL ||
       "http://localhost:8000";
 
+    const targetUrl = new URL("/api/speak", backendBase).toString();
+
     try {
-      const fastApiRes = await fetch(`${backendUrl}/api/speak`, {
+      const fastApiRes = await fetch(targetUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: cleanText, voice }),
-        signal: AbortSignal.timeout(2500),
+        signal: AbortSignal.timeout(3000),
       });
 
       if (fastApiRes.ok) {

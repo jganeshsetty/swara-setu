@@ -53,7 +53,17 @@ export default function KannadaRagVoiceAgent() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-  const [backendUrl, setBackendUrl] = useState("http://localhost:8000");
+  const [backendUrl, setBackendUrl] = useState<string>(() => {
+    if (process.env.NEXT_PUBLIC_BACKEND_URL !== undefined) {
+      return process.env.NEXT_PUBLIC_BACKEND_URL;
+    }
+    // When running standalone Next.js dev on port 3000, default to local FastAPI port 8000
+    if (typeof window !== "undefined" && window.location.port === "3000") {
+      return "http://localhost:8000";
+    }
+    // In production or `vercel dev`, use relative path to let Vercel rewrites handle routing
+    return "";
+  });
 
   const [agentStatusText, setAgentStatusText] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);

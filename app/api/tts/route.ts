@@ -122,8 +122,14 @@ export async function POST(req: NextRequest) {
     // check if client explicitly asked for fallback or return descriptive error
     if (body.fallbackOnError) {
       try {
-        // Fallback to local Edge-TTS Kannada neural endpoint (/api/speak)
-        const fallbackRes = await fetch("http://localhost:8000/api/speak", {
+        // Fallback to local Edge-TTS Kannada neural endpoint via service binding
+        const backendBase =
+          process.env.BACKEND_URL ||
+          process.env.NEXT_PUBLIC_BACKEND_URL ||
+          "http://localhost:8000";
+        const fallbackUrl = new URL("/api/speak", backendBase).toString();
+
+        const fallbackRes = await fetch(fallbackUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, voice: "kn-IN-SapnaNeural" }),
