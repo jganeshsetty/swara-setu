@@ -68,3 +68,4 @@ rl.on('close', () => {
   writeStream.end();
   console.log(`Compact dataset written to ${outputPath} with ${count} records.`);
 });
+
