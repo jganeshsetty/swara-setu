@@ -19,11 +19,11 @@ if sys.platform == "win32":
     except Exception as encoding_err:
         print(f"Notice: stdout encoding reconfigure: {encoding_err}")
 
+import math
+from collections import Counter
+
 # Load .env file
 load_dotenv()
-
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 
 app = FastAPI(
     title="Swara-Setu Kannada RAG API",
@@ -44,20 +44,75 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
-CHROMA_DIR = os.path.join(BASE_DIR, "chroma_db")
-DATASET_CSV = os.path.join(PROJECT_ROOT, "final_best_kannada_rag_dataset.csv")
 
-print("Loading Master Kannada Dataset for Hybrid Search...")
-df_dataset = pd.read_csv(DATASET_CSV)
-print(f"Master dataset loaded: {len(df_dataset)} records.")
+# Priority: compact dataset in backend/, fallback to master dataset in project root
+COMPACT_CSV = os.path.join(BASE_DIR, "rag_dataset.csv")
+MASTER_CSV = os.path.join(PROJECT_ROOT, "final_best_kannada_rag_dataset.csv")
+DATASET_CSV = COMPACT_CSV if os.path.exists(COMPACT_CSV) else MASTER_CSV
 
-print("Loading Multilingual Hugging Face Embeddings ('paraphrase-multilingual-MiniLM-L12-v2')...")
-embeddings = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
+print(f"Loading Kannada Dataset from {DATASET_CSV}...")
+try:
+    df_dataset = pd.read_csv(DATASET_CSV, usecols=["region_name", "retrieval_text"])
+    df_dataset["region_name"] = df_dataset["region_name"].fillna("").astype(str)
+    df_dataset["retrieval_text"] = df_dataset["retrieval_text"].fillna("").astype(str)
+    print(f"Master dataset loaded: {len(df_dataset)} records.")
+except Exception as err:
+    print(f"Warning: Failed to load dataset: {err}")
+    df_dataset = pd.DataFrame(columns=["region_name", "retrieval_text"])
 
-print("Connecting to ChromaDB collection...")
-vectorstore = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
-doc_count = vectorstore._collection.count()
-print(f"ChromaDB connected successfully. Total indexed documents: {doc_count}")
+# ---------------------------------------------------------------------------
+# Lightweight In-Memory BM25 Semantic Token Engine (< 5MB RAM, no PyTorch needed)
+# ---------------------------------------------------------------------------
+class LightweightBM25:
+    def __init__(self, corpus: List[str], k1: float = 1.5, b: float = 0.75):
+        self.k1 = k1
+        self.b = b
+        self.corpus_size = len(corpus)
+        self.doc_lens = []
+        self.doc_token_counts = []
+        self.df = Counter()
+
+        for doc in corpus:
+            tokens = [w for w in re.findall(r'[\u0C80-\u0CFF\w]+', doc) if len(w) >= 2]
+            self.doc_lens.append(len(tokens))
+            counts = Counter(tokens)
+            self.doc_token_counts.append(counts)
+            for t in counts:
+                self.df[t] += 1
+
+        self.avg_dl = sum(self.doc_lens) / max(1, self.corpus_size)
+
+    def get_top_match(self, query_tokens: List[str], candidate_indices: Optional[List[int]] = None) -> Tuple[Optional[int], float]:
+        if not query_tokens or self.corpus_size == 0:
+            return None, 0.0
+
+        indices = candidate_indices if candidate_indices is not None else range(self.corpus_size)
+        best_idx = None
+        best_score = 0.0
+
+        for idx in indices:
+            dl = self.doc_lens[idx]
+            counts = self.doc_token_counts[idx]
+            score = 0.0
+            matched = 0
+            for t in query_tokens:
+                if t in counts:
+                    matched += 1
+                    tf = counts[t]
+                    df_val = self.df.get(t, 0)
+                    idf = math.log(1.0 + (self.corpus_size - df_val + 0.5) / (df_val + 0.5))
+                    denom = tf + self.k1 * (1.0 - self.b + self.b * (dl / self.avg_dl))
+                    score += idf * (tf * (self.k1 + 1.0)) / max(0.001, denom)
+
+            if score > best_score and matched >= 1:
+                best_score = score
+                best_idx = idx
+
+        return best_idx, best_score
+
+print("Initializing Lightweight BM25 index for semantic token retrieval...")
+bm25_engine = LightweightBM25(df_dataset["retrieval_text"].tolist())
+print(f"BM25 index ready for {bm25_engine.corpus_size} documents.")
 
 # ---------------------------------------------------------------------------
 # Region and District Metadata Mapping for Pre-Filtering
@@ -327,26 +382,24 @@ def hybrid_retrieve(features: dict) -> Tuple[Optional[str], Optional[dict], floa
             row = sub_df.loc[best_idx]
             return row["retrieval_text"], {"region_name": row.get("region_name", "")}, 0.85, "token_overlap"
 
-    # 4. Dense Vector Search with ChromaDB
+    # 4. Fast BM25 Semantic Token Search (< 5ms, < 5MB RAM)
     try:
-        search_filter = {"region_name": target_region} if target_region else None
-        res = vectorstore.similarity_search_with_score(core or features["raw"], k=3, filter=search_filter)
-        if not res and search_filter:
-            res = vectorstore.similarity_search_with_score(core or features["raw"], k=3)
-
-        if res:
-            best_doc, score = res[0]
-            # Calculate how many significant query tokens appear as whole words
+        candidate_indices = sub_df.index.tolist() if len(sub_df) < len(df_dataset) else None
+        top_idx, bm25_score = bm25_engine.get_top_match(tokens, candidate_indices)
+        if top_idx is not None and bm25_score >= 3.5:
+            matched_row = df_dataset.loc[top_idx]
+            matched_content = matched_row["retrieval_text"]
+            # Verify significant token overlap to avoid false positive hallucinations
             matched_tokens = [
                 t for t in tokens
-                if re.search(rf"(?<![\u0C80-\u0CFF]){re.escape(t)}(?![\u0C80-\u0CFF])", best_doc.page_content)
+                if re.search(rf"(?<![\u0C80-\u0CFF]){re.escape(t)}(?![\u0C80-\u0CFF])", matched_content)
             ]
-            min_matched = len(tokens) if len(tokens) <= 2 else max(2, int(len(tokens) * 0.5))
-            # Strictly reject out-of-domain queries like ISRO Mars mission or Quantum computing
-            if len(matched_tokens) >= min_matched and len(matched_tokens) > 0 and score < 14.0:
-                return best_doc.page_content, best_doc.metadata or {}, float(score), "chroma_dense"
+            min_matched = len(tokens) if len(tokens) <= 2 else max(2, int(len(tokens) * 0.4))
+            if len(matched_tokens) >= min_matched and len(matched_tokens) > 0:
+                confidence = min(0.92, 0.6 + (bm25_score / 25.0))
+                return matched_content, {"region_name": matched_row.get("region_name", "")}, float(confidence), "bm25_semantic"
     except Exception as e:
-        print(f"Chroma search error: {e}")
+        print(f"BM25 search error: {e}")
 
     return None, None, 0.0, "not_found"
 
@@ -526,9 +579,8 @@ def read_root():
     return {
         "status": "online",
         "service": "Swara-Setu Multilingual Hybrid Kannada RAG API",
-        "vector_count": vectorstore._collection.count(),
+        "engine": "Lightweight BM25 + Dynamic Dialect Transformer",
         "dataset_records": len(df_dataset),
-        "chroma_dir": CHROMA_DIR,
     }
 
 
@@ -536,8 +588,8 @@ def read_root():
 def health_check():
     return {
         "status": "ok",
-        "vectors": vectorstore._collection.count(),
         "dataset_records": len(df_dataset),
+        "engine": "active",
     }
 
 

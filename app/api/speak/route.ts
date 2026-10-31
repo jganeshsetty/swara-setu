@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: cleanText, voice }),
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (fastApiRes.ok) {
