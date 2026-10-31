@@ -172,14 +172,22 @@ export async function seedDatabaseFromCsv() {
 
   console.log("✅ Connected to MongoDB:", conn.name);
 
-  const csvFilePath = path.resolve(
+  let csvFilePath = path.resolve(
     process.cwd(),
     "kannada_regional_30_sentences_10_regions.csv"
   );
 
   if (!fs.existsSync(csvFilePath)) {
-    console.error(`❌ CSV file not found at: ${csvFilePath}`);
-    process.exit(1);
+    const fallbackCsv = path.resolve(
+      process.cwd(),
+      "final_best_kannada_rag_dataset.csv"
+    );
+    if (fs.existsSync(fallbackCsv)) {
+      csvFilePath = fallbackCsv;
+    } else {
+      console.error(`❌ CSV file not found at: ${csvFilePath} or ${fallbackCsv}`);
+      process.exit(1);
+    }
   }
 
   console.log(`📖 Reading CSV file: ${path.basename(csvFilePath)}`);

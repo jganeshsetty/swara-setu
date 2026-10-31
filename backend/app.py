@@ -4,10 +4,12 @@ import sys
 from typing import Optional, List, Dict, Any, Tuple
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from pydantic import BaseModel
+import edge_tts
 
 # Set UTF-8 encoding for standard output on Windows
 if sys.platform == "win32":
@@ -39,6 +41,8 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 CHROMA_DIR = os.path.join(BASE_DIR, "chroma_db")
 DATASET_CSV = os.path.join(PROJECT_ROOT, "final_best_kannada_rag_dataset.csv")
@@ -75,11 +79,14 @@ REGION_METADATA_MAP: Dict[str, str] = {
     # Uttara Kalyana (Bidar, Kalaburagi, Yadgir)
     "uttara_kalyana": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "ಉತ್ತರ ಕಲ್ಯಾಣ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಉತ್ತರ ಕರ್ನಾಟಕ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಉತ್ತರ ಕರ್ನಾಟಕದಲ್ಲಿ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "bidar": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "ಬೀದರ್": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "kalaburagi": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "gulbarga": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "ಕಲಬುರಗಿ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
+    "ಗುಲ್ಬರ್ಗ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "yadgir": "ಉತ್ತರ ಕಲ್ಯಾಣ",
     "ಯಾದಗಿರಿ": "ಉತ್ತರ ಕಲ್ಯಾಣ",
 
@@ -113,6 +120,8 @@ REGION_METADATA_MAP: Dict[str, str] = {
     # Karavali / Coastal (Mangaluru, Udupi, Karwar)
     "karavali_coast": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
     "ಕರಾವಳಿ ಕರ್ನಾಟಕ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಕರಾವಳಿ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
+    "ಕರಾವಳಿಯಲ್ಲಿ": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
     "coastal": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
     "mangaluru": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
     "mangalore": "ಕರಾವಳಿ ಕರ್ನಾಟಕ",
@@ -129,6 +138,8 @@ REGION_METADATA_MAP: Dict[str, str] = {
     # Malnad Ghats (Shivamogga, Chikkamagaluru, Kodagu)
     "malnad_ghats": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
     "ಮಲೆನಾಡು ಗಿರಿಧಾಮ": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಮಲೆನಾಡು": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
+    "ಮಲೆನಾಡಿನಲ್ಲಿ": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
     "shivamogga": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
     "shimoga": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
     "ಶಿವಮೊಗ್ಗ": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ",
@@ -242,6 +253,7 @@ def extract_query_features(raw_query: str, region_arg: Optional[str] = None, dis
         clean = re.sub(rf'\b{re.escape(sw)}\b', ' ', clean)
 
     clean = re.sub(r'[^\u0C80-\u0CFF\w\s]', ' ', clean)
+    clean = re.sub(r'\s*(?:ಹೇಳ್ತಾರೆ|ಹೇಳುತ್ತಾರೆ|ಅನ್ನೋದನ್ನ|ಅನ್ನೋದನ್ನು|ಕೇಳ್ತಾರೆ|ನುಡಿತಾರೆ|ಅರ್ಥ|ಹೇಗೆ|ಹ್ಯಾಂಗೆ)\s*$', '', clean)
     clean = re.sub(r'\s+', ' ', clean).strip()
 
     core_phrase = quoted_phrase if quoted_phrase else clean
@@ -396,80 +408,116 @@ def parse_rag_document_content(content: str, meta: dict) -> Dict[str, str]:
     }
 
 
+from dialect_transformer import (
+    adapt_sentence_to_dialect,
+    is_adversarial_or_gibberish,
+    is_out_of_domain_science_or_tech,
+)
+
+
 def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Optional[str] = None) -> dict:
     """
-    High-Precision Grounded Kannada RAG Pipeline:
+    High-Precision Grounded Kannada RAG Pipeline with Dynamic Dialect Adaptation:
     1. Extracts intent, quoted phrases, and active region filter.
     2. Executes Hybrid Retrieval (Lexical exact + Whole-word token overlap + Chroma Dense).
-    3. Relevance Guard: If confidence < 0.6 or query is out-of-domain (e.g., ISRO, Quantum),
-       gracefully abstains to prevent hallucinations.
-    4. Formats a 2-3 sentence spoken Kannada response for Voice TTS.
+    3. Handles out-of-domain science/tech and adversarial gibberish cleanly.
+    4. For any arbitrary novel input sentence, adapts it dynamically to the requested regional dialect.
+    5. Formats natural spoken Kannada for Voice TTS.
     """
+    # 1. Check for pure non-linguistic science/tech questions
+    if is_out_of_domain_science_or_tech(user_q):
+        return {
+            "answer": "ಸ್ವರಸೇತು ಕರ್ನಾಟಕದ ಪ್ರಾದೇಶಿಕ ಕನ್ನಡ ಉಪಭಾಷೆಗಳನ್ನು ಕಲಿಯುವ ವೇದಿಕೆಯಾಗಿದೆ. ವಿಜ್ಞಾನ ಅಥವಾ ತಾಂತ್ರಿಕ ವಿಷಯಗಳ ಬದಲು, ಯಾವುದೇ ಕನ್ನಡ ವಾಕ್ಯವನ್ನು ಆಡುಮಾತಿಗೆ ಪರಿವರ್ತಿಸಲು ಕೇಳಿ ನೋಡಿ!",
+            "source": "relevance_guard_science_ood",
+            "score": 0.0,
+            "region_filtered": None,
+            "method": "science_guard",
+        }
+
+    # 2. Check for adversarial nonsense words
+    if is_adversarial_or_gibberish(user_q):
+        return {
+            "answer": "ಕ್ಷಮಿಸಿ, ಇದು ಕನ್ನಡದ ಯಾವುದೇ ಪ್ರಾದೇಶಿಕ ಉಪಭಾಷೆಯಲ್ಲಿ ಗುರುತಿಸಲಾದ ಅಧಿಕೃತ ಪದವಲ್ಲ. ದಯವಿಟ್ಟು ನಿಜವಾದ ಕನ್ನಡ ಪದ ಅಥವಾ ವಾಕ್ಯವನ್ನು ಕೇಳಿ ನೋಡಿ!",
+            "source": "relevance_guard_adversarial",
+            "score": 0.0,
+            "region_filtered": None,
+            "method": "gibberish_guard",
+        }
+
     features = extract_query_features(user_q, region, district)
     doc_content, doc_meta, score, method = hybrid_retrieve(features)
 
-    # RELEVANCE GUARD: Graceful abstention for out-of-domain or ungrounded queries
-    if not doc_content or score < 0.6:
-        return {
-            "answer": "ಕ್ಷಮಿಸಿ, ಈ ನಿರ್ದಿಷ್ಟ ವಾಕ್ಯದ ಬಗ್ಗೆ ನನ್ನ ದತ್ತಾಂಶದಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ದಿನನಿತ್ಯದ ಮಾತುಕತೆ, ಮಾರುಕಟ್ಟೆ, ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!",
-            "source": "relevance_guard_abstain",
-            "score": float(score),
-            "region_filtered": features["region"],
-            "method": method,
-        }
+    # 3. Grounded Retrieval Hit
+    if doc_content and score >= 0.6:
+        parsed = parse_rag_document_content(doc_content, doc_meta or {})
+        if parsed:
+            region_display = parsed.get("region") or features.get("region") or "ಕರ್ನಾಟಕ"
+            if not isinstance(region_display, str):
+                region_display = "ಕರ್ನಾಟಕ"
+            if "Dharwad" in region_display:
+                region_display = "ಧಾರವಾಡ"
 
-    parsed = parse_rag_document_content(doc_content, doc_meta or {})
-    if not parsed:
-        return {
-            "answer": "ಕ್ಷಮಿಸಿ, ಈ ನಿರ್ದಿಷ್ಟ ವಾಕ್ಯದ ಬಗ್ಗೆ ನನ್ನ ದತ್ತಾಂಶದಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ. ನೀವು ದಿನನಿತ್ಯದ ಮಾತುಕತೆ, ಮಾರುಕಟ್ಟೆ, ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ ನೋಡಬಹುದು!",
-            "source": "relevance_guard_unparsed",
-            "score": float(score),
-            "region_filtered": features["region"],
-            "method": method,
-        }
+            is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು"])
+            sentences: List[str] = []
 
-    region_display = parsed["region"] or features["region"] or "ಕರ್ನಾಟಕ"
-    if "Dharwad" in region_display:
-        region_display = "ಧಾರವಾಡ"
+            if parsed["type"] == "lexicon":
+                if is_meaning_query and parsed["meaning"]:
+                    sentences.append(f'"{parsed["regional"]}" ಎಂದರೆ "{parsed["meaning"]}" ಅಂತ ಅರ್ಥ.')
+                    sentences.append(f'{region_display} ಭಾಗದಲ್ಲಿ ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಬಳಸುತ್ತಾರೆ.')
+                    if parsed["standard"]:
+                        sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನುತ್ತಾರೆ.')
+                else:
+                    sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
+                    if parsed["standard"]:
+                        sentences.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}".')
+                    if parsed["meaning"]:
+                        sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
 
-    is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು"])
+            elif parsed["type"] in ("regional_sentence", "parallel"):
+                sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
+                if parsed["standard"]:
+                    sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.')
+                if parsed["meaning"]:
+                    sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
 
-    sentences: List[str] = []
+            else:
+                snippet = str(parsed["regional"])[:120].strip()
+                sentences.append(f'ನಮ್ಮ ದತ್ತಾಂಶದ ಪ್ರಕಾರ: {snippet}.')
+                sentences.append('ಇದು ಪ್ರಾದೇಶಿಕ ಕನ್ನಡದ ಅಧಿಕೃತ ಬಳಕೆಯಾಗಿದೆ.')
 
-    if parsed["type"] == "lexicon":
-        if is_meaning_query and parsed["meaning"]:
-            sentences.append(f'"{parsed["regional"]}" ಎಂದರೆ "{parsed["meaning"]}" ಅಂತ ಅರ್ಥ.')
-            sentences.append(f'{region_display} ಭಾಗದಲ್ಲಿ ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಬಳಸುತ್ತಾರೆ.')
-            if parsed["standard"]:
-                sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನುತ್ತಾರೆ.')
-        else:
-            sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
-            if parsed["standard"]:
-                sentences.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}".')
-            if parsed["meaning"]:
-                sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
+            is_translation_request = any(
+                k in user_q
+                for k in ["ಹೇಗೆ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುತ್ತಾರೆ", "ಹ್ಯಾಂಗ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ನುಡಿತಾರೆ", "ಶೈಲಿಯಲ್ಲಿ", "ಆಡುಮಾತಿನಲ್ಲಿ", "ಪರಿವರ್ತಿಸಿ", "ಹೇಗೆ ಕೇಳುತ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುವುದು"]
+            )
 
-    elif parsed["type"] in ("regional_sentence", "parallel"):
-        sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
-        if parsed["standard"]:
-            sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.')
-        if parsed["meaning"]:
-            sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
+            # If user wants a dialect translation, do not return random generic corpus blogs
+            if parsed["type"] in ("lexicon", "regional_sentence", "parallel") or not is_translation_request:
+                return {
+                    "answer": " ".join(sentences[:3]),
+                    "source": f"rag_{method}",
+                    "score": float(score),
+                    "region_filtered": features["region"],
+                    "method": method,
+                }
 
-    else:
-        # General corpus snippet
-        snippet = parsed["regional"][:120].strip()
-        sentences.append(f'ನಮ್ಮ ದತ್ತಾಂಶದ ಪ್ರಕಾರ: {snippet}.')
-        sentences.append('ಇದು ಪ್ರಾದೇಶಿಕ ಕನ್ನಡದ ಅಧಿಕೃತ ಬಳಕೆಯಾಗಿದೆ.')
+    # 4. Dynamic Dialect Generation for ANY novel input sentence
+    core_sentence = features.get("quoted") or features.get("core") or user_q
+    target_region = features.get("region") or region or "ಉತ್ತರ ಕಲ್ಯಾಣ"
 
-    answer = " ".join(sentences[:3])
+    adapted, region_tag = adapt_sentence_to_dialect(core_sentence, target_region)
+
+    answer_parts = [
+        f'ಖಂಡಿತ! {region_tag} ಆಡುಮಾತಿನಲ್ಲಿ ಇದನ್ನು ಈ ರೀತಿ ಹೇಳಬಹುದು: "{adapted}".'
+    ]
+    if core_sentence != adapted:
+        answer_parts.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{core_sentence}".')
 
     return {
-        "answer": answer,
-        "source": f"rag_{method}",
-        "score": float(score),
-        "region_filtered": features["region"],
-        "method": method,
+        "answer": " ".join(answer_parts),
+        "source": "rag_dynamic_generator",
+        "score": 0.88,
+        "region_filtered": str(target_region),
+        "method": "dynamic_dialect_transformer",
     }
 
 
@@ -484,20 +532,10 @@ def read_root():
     }
 
 
-from bhashini_service import bhashini_service
-
-
-class AudioQuery(BaseModel):
-    audio_base64: str
-    region: Optional[str] = None
-    district: Optional[str] = None
-
-
 @app.get("/health")
 def health_check():
     return {
         "status": "ok",
-        "bhashini_configured": bhashini_service.is_configured(),
         "vectors": vectorstore._collection.count(),
         "dataset_records": len(df_dataset),
     }
@@ -517,69 +555,128 @@ async def ask_question(query: UserQuery):
         return {"error": str(e)}
 
 
-@app.post("/api/voice-chat")
-async def voice_chat(audio_query: AudioQuery):
+class TtsPayload(BaseModel):
+    text: str
+    voice: Optional[str] = None  # e.g. "kn-IN-SapnaNeural" or "kn-IN-GaganNeural"
+
+DEFAULT_SAPNA = "kn-IN-SapnaNeural"
+DEFAULT_GAGAN = "kn-IN-GaganNeural"
+
+
+@app.post("/api/speak")
+async def speak(payload: TtsPayload):
     """
-    Native Kannada Voice RAG with Regional Pre-Filtering:
-    1. Base64 Audio -> Bhashini ASR -> Kannada Text
-    2. Kannada Text + Region Filter -> Hybrid RAG Pipeline -> 2-3 Sentence Voice Answer
-    3. Voice Answer -> Bhashini TTS -> Base64 Audio Response
+    Generate Kannada TTS audio using Microsoft edge-tts (100% free, neural voices).
+    Streams MP3 audio bytes directly back to client in memory (no temp files).
     """
-    try:
-        raw_audio = audio_query.audio_base64.strip()
-        if not raw_audio:
-            return {"error": "ಖಾಲಿ ಆಡಿಯೋ ಡೇಟಾ (Empty audio data provided)."}
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-        # Check if Bhashini is configured
-        if not bhashini_service.is_configured():
-            return {
-                "error": "Bhashini credentials not configured in backend/.env",
-                "kannada_transcript": "",
-                "answer": "ದಯವಿಟ್ಟು backend/.env ನಲ್ಲಿ Bhashini API ರುಜುವಾತುಗಳನ್ನು (credentials) ಸೇರಿಸಿ.",
-                "audio_response_base64": "",
-            }
+    # Select voice: default to SapnaNeural (Female Kannada), fallback to GaganNeural
+    voice = payload.voice or DEFAULT_SAPNA
+    if voice not in [DEFAULT_SAPNA, DEFAULT_GAGAN]:
+        if not voice.startswith("kn-IN"):
+            voice = DEFAULT_SAPNA
 
-        # Step 1: Speech-to-Text via Bhashini ASR
-        print("[Voice Chat] Converting Kannada speech to text with Bhashini...")
-        user_kannada_text = bhashini_service.convert_speech_to_text(raw_audio)
+    # Clean text for TTS
+    clean_text = re.sub(r'[^ಀ-೿\s।,;!?\-]', ' ', text)
+    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+    if not clean_text:
+        clean_text = text
 
-        if not user_kannada_text:
-            return {
-                "kannada_transcript": "",
-                "answer": "ಧ್ವನಿಯನ್ನು ಗುರುತಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಸ್ಪಷ್ಟವಾಗಿ ಮಾತನಾಡಿ.",
-                "audio_response_base64": "",
-            }
+    async def generate_audio():
+        try:
+            communicate = edge_tts.Communicate(clean_text, voice)
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    yield chunk["data"]
+        except Exception as e:
+            print(f"[edge-tts error]: {e}")
+            try:
+                communicate = edge_tts.Communicate(clean_text, DEFAULT_GAGAN)
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio":
+                        yield chunk["data"]
+            except Exception as e2:
+                print(f"[edge-tts fallback error]: {e2}")
+                return
 
-        print(f"[Voice Chat] User said in Kannada: {user_kannada_text}")
+    return StreamingResponse(
+        generate_audio(),
+        media_type="audio/mpeg",
+        headers={
+            "Content-Disposition": f'inline; filename="kannada_voice.mp3"',
+            "Cache-Control": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
-        # Step 2: Feed to Hybrid RAG pipeline with regional pre-filtering
-        rag_result = query_rag_pipeline(
-            user_kannada_text,
-            region=audio_query.region,
-            district=audio_query.district,
-        )
-        answer_text = rag_result.get("answer", "")
 
-        # Clean answer text for TTS
-        clean_tts_text = re.sub(r"[•*#_`]", "", answer_text)
-        clean_tts_text = re.sub(r"\(.*?\)", "", clean_tts_text)
-        clean_tts_text = re.sub(r"\s+", " ", clean_tts_text).strip()
+class HfTtsPayload(BaseModel):
+    text: str
+    description: Optional[str] = None
+    fallbackOnError: Optional[bool] = False
 
-        # Step 3: Text-to-Speech via Bhashini TTS
-        print("[Voice Chat] Converting RAG answer to Kannada speech with Bhashini...")
-        audio_base64_response = bhashini_service.convert_text_to_speech(clean_tts_text or answer_text)
 
-        return {
-            "kannada_transcript": user_kannada_text,
-            "answer": answer_text,
-            "audio_response_base64": audio_base64_response,
-            "source": rag_result.get("source", "rag_pipeline"),
-            "region_filtered": rag_result.get("region_filtered"),
-        }
+@app.post("/api/tts")
+async def hf_tts_endpoint(payload: HfTtsPayload):
+    """
+    Remote Hugging Face Inference API for ai4bharat/indic-parler-tts (Zero local ML / PyTorch).
+    Streams or returns raw audio bytes back to client.
+    """
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-    except Exception as e:
-        print(f"[Voice Chat Error]: {e}")
-        return {"error": str(e)}
+    hf_key = os.getenv("HUGGINGFACE_API_KEY") or os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    if not hf_key:
+        raise HTTPException(status_code=500, detail="HUGGINGFACE_API_KEY not configured in backend/.env")
+
+    endpoints = [
+        "https://api-inference.huggingface.co/models/ai4bharat/indic-parler-tts",
+        "https://router.huggingface.co/hf-inference/models/ai4bharat/indic-parler-tts",
+    ]
+
+    headers = {
+        "Authorization": f"Bearer {hf_key}",
+        "Content-Type": "application/json",
+        "x-use-cache": "false",
+    }
+    body = {
+        "inputs": text,
+        "parameters": {
+            "description": payload.description or "A female speaker delivers clear expressive speech with moderate pace."
+        },
+        "options": {"wait_for_model": True},
+    }
+
+    import requests
+
+    last_err = ""
+    for ep in endpoints:
+        try:
+            res = requests.post(ep, headers=headers, json=body, timeout=35)
+            if res.status_code == 200 and len(res.content) > 100:
+                content_type = res.headers.get("content-type", "audio/wav")
+                return Response(
+                    content=res.content,
+                    media_type=content_type,
+                    headers={
+                        "Content-Disposition": 'inline; filename="indic_parler_kannada.wav"',
+                        "X-TTS-Provider": "ai4bharat/indic-parler-tts",
+                    },
+                )
+            last_err = res.text
+        except requests.exceptions.Timeout:
+            raise HTTPException(status_code=504, detail="Hugging Face Inference API timed out (35s).")
+        except Exception as e:
+            last_err = str(e)
+
+    if payload.fallbackOnError:
+        return await speak(TtsPayload(text=text))
+
+    raise HTTPException(status_code=502, detail=f"Hugging Face API error: {last_err}")
 
 
 if __name__ == "__main__":

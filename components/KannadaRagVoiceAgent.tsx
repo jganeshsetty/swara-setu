@@ -55,8 +55,6 @@ export default function KannadaRagVoiceAgent() {
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
   const [backendUrl, setBackendUrl] = useState("http://localhost:8000");
 
-  const [isRecordingMedia, setIsRecordingMedia] = useState(false);
-  const [bhashiniConfigured, setBhashiniConfigured] = useState<boolean>(false);
   const [agentStatusText, setAgentStatusText] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [selectedRegionCode, setSelectedRegionCode] = useState<string | null>(null);
@@ -73,8 +71,6 @@ export default function KannadaRagVoiceAgent() {
   }, []);
 
   const recognitionRef = useRef<any>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,7 +82,7 @@ export default function KannadaRagVoiceAgent() {
     }
   }, [conversation, isExpanded, isLoading]);
 
-  // Check backend server status & Bhashini configuration
+  // Check backend server status
   useEffect(() => {
     let active = true;
     const checkHealth = async () => {
@@ -94,10 +90,6 @@ export default function KannadaRagVoiceAgent() {
         const res = await fetch(`${backendUrl}/health`, { method: "GET", signal: AbortSignal.timeout(2000) });
         if (active) {
           setServerOnline(res.ok);
-          if (res.ok) {
-            const data = await res.json();
-            setBhashiniConfigured(Boolean(data.bhashini_configured));
-          }
         }
       } catch {
         if (active) setServerOnline(false);
@@ -111,46 +103,7 @@ export default function KannadaRagVoiceAgent() {
     };
   }, [backendUrl]);
 
-  // Play base64 audio string from Bhashini TTS
-  const playBase64Audio = (base64Audio: string) => {
-    try {
-      if (!base64Audio) return;
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-      }
-
-      const audioSrc = base64Audio.startsWith("data:")
-        ? base64Audio
-        : `data:audio/wav;base64,${base64Audio}`;
-
-      const audio = new Audio(audioSrc);
-      audioPlayerRef.current = audio;
-
-      setIsSpeaking(true);
-      setAgentStatusText("ಮಾತನಾಡುತ್ತಿದೆ (Speaking via Bhashini)...");
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        setAgentStatusText("");
-      };
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        setAgentStatusText("");
-      };
-
-      audio.play().catch((err) => {
-        console.warn("Autoplay notice:", err);
-        setIsSpeaking(false);
-        setAgentStatusText("");
-      });
-    } catch (e) {
-      console.error("Audio playback error:", e);
-      setIsSpeaking(false);
-      setAgentStatusText("");
-    }
-  };
-
-  // Stop any active audio (Bhashini audio or Web Speech)
+  // Stop any active audio
   const stopSpeaking = () => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
@@ -163,116 +116,7 @@ export default function KannadaRagVoiceAgent() {
     setAgentStatusText("");
   };
 
-  // Send recorded Audio Blob to /api/voice-chat (Bhashini Pipeline)
-  const handleSendVoiceChat = async (audioBlob: Blob) => {
-    setIsLoading(true);
-    setIsExpanded(true);
-    setAgentStatusText("ಧ್ವನಿಯನ್ನು ಪಠ್ಯಕ್ಕೆ ಪರಿವರ್ತಿಸಲಾಗುತ್ತಿದೆ (Bhashini ASR)...");
-
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(",")[1];
-
-        setAgentStatusText("ಉತ್ತರ ಹುಡುಕಲಾಗುತ್ತಿದೆ (Querying RAG)...");
-
-        const payload: Record<string, any> = { audio_base64: base64Audio };
-        if (selectedDistrict) payload.district = selectedDistrict;
-        if (selectedRegionCode) payload.region = selectedRegionCode;
-
-        const response = await fetch(`${backendUrl}/api/voice-chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await response.json();
-
-        if (data.kannada_transcript) {
-          setConversation((prev) => [
-            ...prev,
-            { role: "user", text: data.kannada_transcript },
-          ]);
-        }
-
-        if (data.answer) {
-          setConversation((prev) => [
-            ...prev,
-            { role: "assistant", text: data.answer },
-          ]);
-
-          // Agent-to-Map real-time synchronization
-          const detectedLoc = detectLocationFromText(data.answer) || detectLocationFromText(data.kannada_transcript || "");
-          if (detectedLoc) {
-            dispatchAgentLocationHighlight(detectedLoc);
-          }
-
-          if (data.audio_response_base64) {
-            playBase64Audio(data.audio_response_base64);
-          } else {
-            speakKannada(data.answer);
-          }
-        } else if (data.error) {
-          setConversation((prev) => [
-            ...prev,
-            { role: "assistant", text: `ದೋಷ: ${data.error}` },
-          ]);
-        }
-        setIsLoading(false);
-        setAgentStatusText("");
-      };
-    } catch (err: any) {
-      console.error(err);
-      setIsLoading(false);
-      setAgentStatusText("");
-      setConversation((prev) => [
-        ...prev,
-        { role: "assistant", text: "ಧ್ವನಿ ಪ್ರಕ್ರಿಯೆಯಲ್ಲಿ ತಾಂತ್ರಿಕ ದೋಷ ಸಂಭವಿಸಿದೆ." },
-      ]);
-    }
-  };
-
-  // Push-to-Talk: Start Browser MediaRecorder
-  const startRecordingAudio = async () => {
-    try {
-      stopSpeaking();
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-        stream.getTracks().forEach((track) => track.stop());
-        handleSendVoiceChat(audioBlob);
-      };
-
-      mediaRecorder.start();
-      setIsRecordingMedia(true);
-      setAgentStatusText("ಧ್ವನಿ ಆಲಿಸಲಾಗುತ್ತಿದೆ... ಮಾತನಾಡಿ (Recording audio)...");
-    } catch (err) {
-      console.error("Microphone access error:", err);
-      alert("ಮೈಕ್ರೋಫೋನ್ ಅನುಮತಿ ದೊರೆತಿಲ್ಲ. ದಯವಿಟ್ಟು ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿಸಿ.");
-    }
-  };
-
-  // Push-to-Talk: Stop Browser MediaRecorder
-  const stopRecordingAudio = () => {
-    if (mediaRecorderRef.current && isRecordingMedia) {
-      mediaRecorderRef.current.stop();
-      setIsRecordingMedia(false);
-    }
-  };
-
-  // Fallback Web Speech Recognition Setup
+  // Kannada Speech Recognition Setup (Web Speech API)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -299,15 +143,6 @@ export default function KannadaRagVoiceAgent() {
   }, []);
 
   const toggleVoiceListening = () => {
-    if (bhashiniConfigured) {
-      if (isRecordingMedia) {
-        stopRecordingAudio();
-      } else {
-        startRecordingAudio();
-      }
-      return;
-    }
-
     if (!recognitionRef.current) {
       alert("ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ Web Speech API ಬೆಂಬಲ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು Chrome ಅಥವಾ Edge ಬಳಸಿ.");
       return;
@@ -323,46 +158,98 @@ export default function KannadaRagVoiceAgent() {
     }
   };
 
-  // Kannada Text to Speech fallback (Web Speech API)
-  const speakKannada = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+  // Kannada Text to Speech (Neural /api/speak with SpeechSynthesis fallback)
+  const speakKannada = async (text: string) => {
+    if (!text || !text.trim()) return;
 
     if (isSpeaking) {
-      setIsSpeaking(false);
+      stopSpeaking();
       return;
     }
 
-    const cleanSpeechText = text
-      .replace(/[•*#_"`]/g, "")
-      .replace(/\(.*?\)/g, "")
-      .replace(/ಇಂಗ್ಲಿಷ್ ಅರ್ಥ:.*$/gm, "")
-      .replace(/English:.*$/gm, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    stopSpeaking();
+    setIsSpeaking(true);
+    setAgentStatusText("ಮಾತನಾಡುತ್ತಿದೆ (Speaking)...");
 
-    const utterance = new SpeechSynthesisUtterance(cleanSpeechText || text);
-    utterance.lang = "kn-IN";
-    utterance.rate = 0.93;
+    const fallbackWebSpeech = () => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        setIsSpeaking(false);
+        setAgentStatusText("");
+        return;
+      }
 
-    const voices = window.speechSynthesis.getVoices();
-    const kannadaVoice = voices.find((v) => v.lang.includes("kn") || v.lang.toLowerCase().includes("kannada"));
-    if (kannadaVoice) utterance.voice = kannadaVoice;
+      window.speechSynthesis.cancel();
+      const cleanSpeechText = text
+        .replace(/[•*#_"`]/g, "")
+        .replace(/\(.*?\)/g, "")
+        .replace(/ಇಂಗ್ಲಿಷ್ ಅರ್ಥ:.*$/gm, "")
+        .replace(/English:.*$/gm, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setAgentStatusText("ಮಾತನಾಡುತ್ತಿದೆ (Speaking)...");
+      const utterance = new SpeechSynthesisUtterance(cleanSpeechText || text);
+      utterance.lang = "kn-IN";
+      utterance.rate = 0.93;
+
+      const voices = window.speechSynthesis.getVoices();
+      const kannadaVoice = voices.find((v) => v.lang.includes("kn") || v.lang.toLowerCase().includes("kannada"));
+      if (kannadaVoice) utterance.voice = kannadaVoice;
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setAgentStatusText("ಮಾತನಾಡುತ್ತಿದೆ (Speaking)...");
+      };
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setAgentStatusText("");
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setAgentStatusText("");
+      };
+
+      window.speechSynthesis.speak(utterance);
     };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setAgentStatusText("");
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setAgentStatusText("");
-    };
 
-    window.speechSynthesis.speak(utterance);
+    try {
+      const res = await fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "kn-IN-SapnaNeural" }),
+      });
+
+      if (!res.ok) {
+        fallbackWebSpeech();
+        return;
+      }
+
+      const blob = await res.blob();
+      if (!blob || blob.size === 0) {
+        fallbackWebSpeech();
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setAgentStatusText("");
+        URL.revokeObjectURL(url);
+        audioPlayerRef.current = null;
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        audioPlayerRef.current = null;
+        fallbackWebSpeech();
+      };
+
+      await audio.play();
+    } catch {
+      fallbackWebSpeech();
+    }
   };
 
   const handleSubmit = async (queryText?: string) => {
@@ -453,7 +340,7 @@ export default function KannadaRagVoiceAgent() {
                   ಸ್ವರಸೇತು RAG ಸಂವಾದ (Kannada AI Assistant)
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300/70">
-                  {bhashiniConfigured ? "ಭಾಷಿಣಿ AI (Bhashini)" : "ಸ್ವರಸೇತು AI"}
+                  ಸ್ವರಸೇತು AI
                 </span>
               </div>
 

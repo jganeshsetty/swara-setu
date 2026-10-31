@@ -7,16 +7,9 @@
  *
  * Props:
  *   regionalText: string - The Kannada sentence to display and play
- *   onPlay: function - Callback when user clicks play
+ *   onPlay: function - Callback when user clicks play or close
  *   regionName: string - Region name for display (e.g. "ಧಾರವಾಡ")
  *   isPlaying: boolean - Current playing state
- *
- * Features:
- * - Glassmorphic design with backdrop-blur, bg-black/40, border-white/20
- * - Loading, speaking, and play states
- * - Disabled button while audio plays to prevent overlap
- * - Proper cleanup on unmount
- * - Tailwind CSS styling consistent with existing UI
  */
 
 import React, { useState, useEffect, useRef } from "react";
@@ -26,22 +19,16 @@ import { useVoiceAgent } from "./useVoiceAgent";
  * RegionInfoPanel - Glassmorphic info panel with audio playback
  */
 const RegionInfoPanel = ({
-  regionalText,
+  regionalText = "",
   onPlay,
-  regionName = " Karnataka",
-}: {
-  regionalText: string;
-  onPlay?: (text: string) => void;
-  regionName?: string;
+  regionName = "ಕರ್ನಾಟಕ",
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
   const [showSpeaking, setShowSpeaking] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef(null);
 
   // Use the custom hook for audio management
   const {
-    audioUrl,
     isPlaying: hookIsPlaying,
     play,
     stop,
@@ -53,55 +40,30 @@ const RegionInfoPanel = ({
     setIsPlaying(hookIsPlaying);
   }, [hookIsPlaying]);
 
-  // Handle audio state changes
-  useEffect(() => {
-    if (showSpeaking) {
-      setShowSpeaking(false);
-      play(regionalText).then(() => {
-        setIsPlaying(true);
-        setShowSpeaking(false);
-        // Auto-stop after a reasonable time (8 seconds)
-        const timer = setTimeout(() => {
-          stop();
-          setIsPlaying(false);
-        }, 8000);
-        return () => clearTimeout(timer);
-      });
-    }
-  }, [play, stop, regionalText]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  const handlePlay = async () => {
+    if (isPlaying) {
       stop();
-      if (audioUrl) {
-        const url = audioUrl;
-        // Can't revoke here since we don't have direct access,
-        // but the hook handles it on end
-      }
-    };
-  }, [stop, audioUrl]);
+      setIsPlaying(false);
+      setShowSpeaking(false);
+      return;
+    }
 
-  // Disable play button while audio is already playing
-  const isDisabled = isPlaying || showLoading || showSpeaking;
+    setShowSpeaking(true);
+    if (onPlay) onPlay(regionalText);
+    await play(regionalText);
+    setShowSpeaking(false);
+  };
 
   return (
     <div
       ref={panelRef}
-      className="
-        fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden
-        pointer-events-auto
-      "
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden pointer-events-auto"
     >
       {/* Glassmorphic panel */}
       <div
         role="dialog"
         aria-modal="true"
-        className="
-          relative w-full max-w-[560px] bg-black/40 backdrop-blur-xl border border-white/20
-          rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.2)]
-          text-white backdrop-filter backdrop-blur-lg
-        "
+        className="relative w-full max-w-[560px] bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.65),inset_0_1px_1px_rgba(255,255,255,0.2)] text-white overflow-hidden"
       >
         {/* Top accent gradient */}
         <div
@@ -112,7 +74,8 @@ const RegionInfoPanel = ({
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-white/10 bg-white/5 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-3.5 h-3.5 rounded-full ring-2 ring-white/30 shadow-xs shrink-0"
+            <div
+              className="w-3.5 h-3.5 rounded-full ring-2 ring-white/30 shadow-xs shrink-0"
               style={{ backgroundColor: "#F5B700" }}
             />
             <div className="min-w-0">
@@ -123,19 +86,25 @@ const RegionInfoPanel = ({
               </div>
               <p className="text-[11px] text-stone-300 font-sans flex items-center gap-1.5 mt-0.5">
                 <svg
-                  className="w-3 h-3 text-amber-400 shrink-0"
+                  className="w-3.5 h-3.5 text-amber-400 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path
-                    className="stroke-2"
+                    strokeWidth="2"
                     strokeLineCap="round"
                     strokeLineJoin="round"
-                    d="M13 16l-4-4 4-4M21 21l-5-5 5-5M13 21l-4-4 4-4M2 6l2.29 2.29m13.71 13.71l2.29 2.29M2 2l2.29 2.29m7.71 7.71l2.29 2.29M13 10l-4-4l4-4M21 10l-5-5l5-5M10 21l-4-4 4-4M10 10l-4-4 4-4"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeWidth="2"
+                    strokeLineCap="round"
+                    strokeLineJoin="round"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                {regionName}
+                <span>ಪ್ರಾದೇಶಿಕ ನುಡಿಗಟ್ಟು</span>
               </p>
             </div>
           </div>
@@ -143,12 +112,11 @@ const RegionInfoPanel = ({
           {/* Close button */}
           <button
             type="button"
-            onClick={() => onPlay && onPlay("close")}
-            className="
-              w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15
-              text-stone-300 hover:text-white flex items-center justify-center
-              transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0
-            "
+            onClick={() => {
+              stop();
+              if (onPlay) onPlay("close");
+            }}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-stone-300 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
             title="ಮುಚ್ಚಿರಿ"
           >
             <svg
@@ -158,7 +126,7 @@ const RegionInfoPanel = ({
               viewBox="0 0 24 24"
             >
               <path
-                className="stroke-2"
+                strokeWidth="2"
                 strokeLineCap="round"
                 strokeLineJoin="round"
                 d="M6 18L18 6M6 6l12 12"
@@ -169,7 +137,6 @@ const RegionInfoPanel = ({
 
         {/* Content */}
         <div className="p-5 sm:p-6 space-y-4">
-          {/* Regional sentence display */}
           <div className="space-y-3">
             {/* Playing state indicator */}
             {showSpeaking && (
@@ -181,13 +148,13 @@ const RegionInfoPanel = ({
                   viewBox="0 0 24 24"
                 >
                   <path
-                    className="stroke-2"
+                    strokeWidth="2"
                     strokeLineCap="round"
                     strokeLineJoin="round"
-                    d="M13 16l-4-4 4-4M21 21l-5-5 5-5M13 21l-4-4 4-4M2 6l2.29 2.29m13.71 13.71l2.29 2.29M2 2l2.29 2.29m7.71 7.71l2.29 2.29M13 10l-4-4l4-4M21 10l-5-5l5-5M10 21l-4-4 4-4M10 10l-4-4 4-4"
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
                   />
                 </svg>
-                <span>Speaking... "{regionalText.substring(0, 50)}{regionalText.length > 50 ? "..." : ""}"</span>
+                <span>ಧ್ವನಿ ಆರಂಭವಾಗುತ್ತಿದೆ...</span>
               </div>
             )}
 
@@ -199,27 +166,15 @@ const RegionInfoPanel = ({
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  if (!isPlaying && !showLoading && !showSpeaking) {
-                    setShowSpeaking(true);
-                    setIsPlaying(true);
-                    play(regionalText).then(() => {
-                      // Audio will auto-manage state
-                    });
-                  }
-                }}
-                disabled={isDisabled}
-                className="
-                  flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold
-                  transition-all cursor-pointer ${
-                    isPlaying
-                      ? "bg-red-600 text-white animate-pulse"
-                      : "bg-amber-400 hover:bg-amber-300 text-stone-950 hover:text-white"
-                  }
-                "
+                onClick={handlePlay}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isPlaying
+                    ? "bg-red-600 text-white animate-pulse"
+                    : "bg-amber-400 hover:bg-amber-300 text-stone-950"
+                }`}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -228,32 +183,26 @@ const RegionInfoPanel = ({
                   viewBox="0 0 24 24"
                 >
                   <path
-                    className="stroke-2"
+                    strokeWidth="2"
                     strokeLineCap="round"
                     strokeLineJoin="round"
-                    d="M13 16l-4-4 4-4M21 21l-5-5 5-5M13 21l-4-4 4-4M2 6l2.29 2.29m13.71 13.71l2.29 2.29M2 2l2.29 2.29m7.71 7.71l2.29 2.29M13 10l-4-4l4-4M21 10l-5-5l5-5M10 21l-4-4 4-4M10 10l-4-4 4-4"
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
                   />
                 </svg>
-                {isPlaying ? "ಆಲಿಸುತ್ತಿದೆ..." : "ಆಲಿ"}
+                <span>{isPlaying ? "ಆಲಿಸುತ್ತಿದೆ..." : "ಆಲಿಸಿ"}</span>
               </button>
             </div>
           </div>
 
           {/* Status messages */}
           {error && (
-            <div className="p-3 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 text-sm font-serif mb-3">
+            <div className="p-3 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 text-xs font-serif">
               {error}
-            </div>
-          )}
-
-          {showLoading && (
-            <div className="py-8 text-center text-sm font-serif text-stone-300 animate-pulse">
-              ವಾಕ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...
             </div>
           )}
         </div>
 
-        {/* Footer */
+        {/* Footer */}
         <div className="px-5 py-3 bg-black/50 border-t border-white/10 flex items-center justify-between text-xs shrink-0">
           <div className="flex items-center gap-2 text-stone-300">
             <svg
@@ -263,22 +212,22 @@ const RegionInfoPanel = ({
               viewBox="0 0 24 24"
             >
               <path
-                className="stroke-2"
+                strokeWidth="2"
                 strokeLineCap="round"
                 strokeLineJoin="round"
-                d="M12 9v2m0 0v2m0-2h.01M5.5 16l1.5-5.5m1.5 5.5l1.5-5.5M12 10v6M12 10l.01-.01m6.99 6l-.01-.01M5.5 8.5l1.5 5.5m1.5-5.5l1.5 5.5"
+                d="M5 13l4 4L19 7"
               />
-            </span>
+            </svg>
             <span className="text-[10px] font-mono">kn-IN neural voice enabled</span>
           </div>
 
           <button
             type="button"
-            onClick={() => onPlay && onPlay("close")}
-            className="
-              px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/20 text-white font-medium text-xs
-              transition-all cursor-pointer
-            "
+            onClick={() => {
+              stop();
+              if (onPlay) onPlay("close");
+            }}
+            className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/20 text-white font-medium text-xs transition-all cursor-pointer"
           >
             ಮುಚ್ಚಿರಿ
           </button>
@@ -288,9 +237,4 @@ const RegionInfoPanel = ({
   );
 };
 
-/**
- * Export the component and utility types
- */
 export default RegionInfoPanel;
-
-export type { RegionInfoPanel };

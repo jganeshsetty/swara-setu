@@ -111,22 +111,95 @@ export default function KarnatakaMap3D() {
     });
   }, [geoData]);
 
-  // 3. Audio Text-to-Speech (kn-IN)
-  const playSentence = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಸೌಲಭ್ಯ ಬೆಂಬಲಿತವಾಗಿಲ್ಲ.");
+  // 3. Audio Text-to-Speech (kn-IN) - Neural Edge-TTS with SpeechSynthesis fallback
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
+  const playSentence = async (text: string) => {
+    if (!text || !text.trim()) return;
+
+    const trimmed = text.trim();
+
+    // Toggle stop if user clicks the button for the currently playing sentence
+    if (playingSentenceText === trimmed && audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+      setPlayingSentenceText(null);
       return;
     }
-    window.speechSynthesis.cancel();
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "kn-IN";
-    speech.rate = 0.95;
 
-    speech.onstart = () => setPlayingSentenceText(text);
-    speech.onend = () => setPlayingSentenceText(null);
-    speech.onerror = () => setPlayingSentenceText(null);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
 
-    window.speechSynthesis.speak(speech);
+    setPlayingSentenceText(trimmed);
+
+    const fallbackSpeech = () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        const clean = trimmed
+          .replace(/[•*#_"`]/g, "")
+          .replace(/\(.*?\)/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        const speech = new SpeechSynthesisUtterance(clean || trimmed);
+        speech.lang = "kn-IN";
+        speech.rate = 0.95;
+        const voices = window.speechSynthesis.getVoices();
+        const kannadaVoice = voices.find(
+          (v) => v.lang.includes("kn") || v.lang.toLowerCase().includes("kannada")
+        );
+        if (kannadaVoice) speech.voice = kannadaVoice;
+
+        speech.onstart = () => setPlayingSentenceText(trimmed);
+        speech.onend = () => setPlayingSentenceText(null);
+        speech.onerror = () => setPlayingSentenceText(null);
+        window.speechSynthesis.speak(speech);
+      } else {
+        setPlayingSentenceText(null);
+      }
+    };
+
+    try {
+      const response = await fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: trimmed, voice: "kn-IN-SapnaNeural" }),
+      });
+
+      if (!response.ok) {
+        fallbackSpeech();
+        return;
+      }
+
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        fallbackSpeech();
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setPlayingSentenceText(null);
+        URL.revokeObjectURL(url);
+        audioPlayerRef.current = null;
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        audioPlayerRef.current = null;
+        fallbackSpeech();
+      };
+
+      await audio.play();
+    } catch {
+      fallbackSpeech();
+    }
   };
 
   const applyTransform = () => {

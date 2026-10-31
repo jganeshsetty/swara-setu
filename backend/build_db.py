@@ -31,20 +31,29 @@ def build_vector_database(batch_size: int = 500):
     # Extract metadata payloads: record_id, record_type, region_name, theme, dialect_status
     docs = []
     for _, row in df.iterrows():
-        page_content = str(row.get("retrieval_text", "")).strip()
-        if not page_content:
+        raw_content = row.get("retrieval_text", "")
+        if pd.isna(raw_content):
+            continue
+        page_content = str(raw_content).strip()
+        if not page_content or page_content == "nan":
             continue
 
+        def safe_str(val):
+            return "" if pd.isna(val) else str(val).strip()
+
         metadata = {
-            "record_id": str(row.get("record_id", "") or "").strip(),
-            "record_type": str(row.get("record_type", "") or "").strip(),
-            "region_name": str(row.get("region_name", "") or "").strip(),
-            "theme": str(row.get("theme", "") or "").strip(),
-            "dialect_status": str(row.get("dialect_status", "") or "").strip(),
+            "record_id": safe_str(row.get("record_id")),
+            "record_type": safe_str(row.get("record_type")),
+            "region_name": safe_str(row.get("region_name")),
+            "theme": safe_str(row.get("theme")),
+            "dialect_status": safe_str(row.get("dialect_status")),
         }
         docs.append(Document(page_content=page_content, metadata=metadata))
 
     print(f"Extracted {len(docs)} intact Document objects for indexing.")
+    if not docs:
+        print("No documents found to index. Aborting.")
+        return
 
     # 3. Clear old Chroma vector index
     if os.path.exists(CHROMA_DIR):

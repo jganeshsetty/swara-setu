@@ -308,21 +308,26 @@ def generate_answer(query: str, region_arg=None, district_arg=None):
 
     return " ".join(parts[:3])
 
-# Run tests on the user's exact 6 queries!
+# Run tests on user queries including out-of-dataset and novel sentences!
+import app
+
 test_queries = [
     ("\"ನಾನು ನಿನ್ನೆ ಶಾಲೆಗೆ ಹೋಗಿದ್ದೆ\" ಅನ್ನೋದನ್ನ ಧಾರವಾಡ ಶೈಲಿಯಲ್ಲಿ ಹೇಗೆ ಹೇಳ್ತಾರೆ?", None, "Dharwad"),
     ("ಹೇಗಿದ್ದೀರಿ ಎಂದು ಉತ್ತರ ಕಲ್ಯಾಣದಲ್ಲಿ ಹೇಗೆ ಕೇಳುತ್ತಾರೆ?", "uttara_kalyana", "Bidar"),
     ("ನೀವು ಹೇಗಿದ್ದೀರಿ ಎಂದು ಮೈಸೂರು ಭಾಗದಲ್ಲಿ ಹೇಗೆ ಹೇಳುತ್ತಾರೆ?", "kaveri_basin", "Mysuru"),
     ("ಉತ್ತರ ಕರ್ನಾಟಕದಲ್ಲಿ 'ಭಾಳ' ಅಂದರೆ ಏನು?", None, None),
+    ("ನನ್ನ ಮೊಬೈಲ್ನಲ್ಲಿ ಇಂಟರ್ನೆಟ್ ಮತ್ತು ವೈಫೈ ಸಿಗ್ನಲ್ ಸಿಗುತ್ತಿಲ್ಲ ಅನ್ನೋದನ್ನ ಉತ್ತರ ಕರ್ನಾಟಕದಲ್ಲಿ ಹೇಗೆ ಹೇಳ್ತಾರೆ?", "uttara_kalyana", "Kalaburagi"),
+    ("ಸಿಲ್ಕ್ ಬೋರ್ಡ್ ಟ್ರಾಫಿಕ್ ಜಾಮ್ನಲ್ಲಿ ಸಿಲುಕಿ ನನಗೆ ಆಫೀಸಿಗೆ ತಡವಾಯಿತು ಅನ್ನೋದನ್ನ ಮಲೆನಾಡಿನಲ್ಲಿ ಹೇಗೆ ಹೇಳ್ತಾರೆ?", "malnad_ghats", "Shivamogga"),
+    ("ಕರಾವಳಿ ಕನ್ನಡದಲ್ಲಿ 'ಕಿಲೋಮ್ಯಾಕ್ ಬುಜುಂಬಾ' ಅಂದರೆ ಏನು ಅರ್ಥ?", "karavali_coast", "Mangaluru"),
     ("ಇಸ್ರೋ ಸಂಸ್ಥೆಯು ಮಂಗಳ ಗ್ರಹಕ್ಕೆ ಕಳುಹಿಸಿದ ರಾಕೆಟ್ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", None, None),
-    ("ಕ್ವಾಂಟಮ್ ಕಂಪ್ಯೂಟಿಂಗ್ ಮತ್ತು ಸೂಪರ್ ಕಂಡಕ್ಟಿವಿಟಿ ತಂತ್ರಜ್ಞಾನದ ಬಗ್ಗೆ ತಿಳಿಸಿ.", None, None),
 ]
 
 print("=" * 80)
-print("TESTING HYBRID RETRIEVAL + RELEVANCE GUARD ON USER QUERIES")
+print("TESTING SWARA-SETU DYNAMIC HYBRID RAG AGENT")
 print("=" * 80)
 
 for q, reg, dist in test_queries:
-    ans = generate_answer(q, reg, dist)
+    res = app.query_rag_pipeline(q, reg, dist)
     print(f"\nUser Query: {q}")
-    print(f"Agent Output: {ans}")
+    print(f"Agent Output: {res['answer']}")
+    print(f"Source/Method: {res['source']} ({res['method']})")
