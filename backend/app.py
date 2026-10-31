@@ -471,14 +471,64 @@ from dialect_transformer import (
 )
 
 
+# ---------------------------------------------------------------------------
+# Comprehensive Authentic Regional Kannada Lexicon Knowledge Base
+# ---------------------------------------------------------------------------
+REGIONAL_LEXICON_KB: Dict[str, Dict[str, str]] = {
+    # Karavali (Mangaluru / Udupi / Coastal)
+    "ಬೊಜ್ಜ": {"meaning": "ಔತಣ / ಸಾಮೂಹಿಕ ಊಟ (Feast)", "standard": "ಊಟ / ಹಬ್ಬದ ಔತಣ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಮಾರಾಯ": {"meaning": "ಸ್ನೇಹಿತ / ಗೆಳೆಯ (Friend/Mate)", "standard": "ಸ್ನೇಹಿತ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಎಂಚಿನ": {"meaning": "ಏನು (What)", "standard": "ಏನು", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಎಂಚಿತ್ತ್": {"meaning": "ಹೇಗೆ (How)", "standard": "ಹೇಗೆ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಇಲ್ಲ": {"meaning": "ಮನೆ (House/Home)", "standard": "ಮನೆ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ತಿಕ್ಕುಜಿಲ್ಲೆ": {"meaning": "ಸಿಗುತ್ತಿಲ್ಲ (Not available)", "standard": "ಸಿಗುತ್ತಿಲ್ಲ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಅಡೆಗೆ": {"meaning": "ಅಲ್ಲಿಗೆ (There)", "standard": "ಅಲ್ಲಿಗೆ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಇಡೆಗೆ": {"meaning": "ಇಲ್ಲಿಗೆ (Here)", "standard": "ಇಲ್ಲಿಗೆ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ನೀರುಳ್ಳಿ": {"meaning": "ಈರುಳ್ಳಿ (Onion)", "standard": "ಈರುಳ್ಳಿ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಕುಡ್ಲ": {"meaning": "ಮಂಗಳೂರು ನಗರ (Mangaluru city)", "standard": "ಮಂಗಳೂರು", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+    "ಪೊರ್ಲು": {"meaning": "ಸುಂದರ / ಚೆಂದ (Beautiful)", "standard": "ಸುಂದರ", "region": "ಕರಾವಳಿ ಕರ್ನಾಟಕ"},
+
+    # North Karnataka / Dharwad / Uttara Kalyana
+    "ಭಾಳ": {"meaning": "ತುಂಬಾ / ಅಧಿಕ (Very / A lot)", "standard": "ತುಂಬಾ / ಬಹಳ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಬಾಳ": {"meaning": "ತುಂಬಾ / ಅಧಿಕ (Very / A lot)", "standard": "ತುಂಬಾ / ಬಹಳ", "region": "ಕೃಷ್ಣಾ ಕಣಿವೆ"},
+    "ಹ್ಯಾಂಗ": {"meaning": "ಹೇಗೆ (How)", "standard": "ಹೇಗೆ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಐತಿ": {"meaning": "ಇದೆ (Is present / Exists)", "standard": "ಇದೆ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಸಿಗವಲ್ದು": {"meaning": "ಸಿಗುತ್ತಿಲ್ಲ (Not available)", "standard": "ಸಿಗುತ್ತಿಲ್ಲ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಬರವಲ್ದು": {"meaning": "ಬರುತ್ತಿಲ್ಲ (Not coming)", "standard": "ಬರುತ್ತಿಲ್ಲ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಹೊಂಟೀನಿ": {"meaning": "ಹೋಗುತ್ತಿದ್ದೇನೆ (Going)", "standard": "ಹೋಗುತ್ತಿದ್ದೇನೆ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಜೋಡಿ": {"meaning": "ಜೊತೆ / ಸಂಗಡ (Along with)", "standard": "ಜೊತೆ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಅವ್ವ": {"meaning": "ತಾಯಿ (Mother)", "standard": "ತಾಯಿ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಖರೇನಾ": {"meaning": "ನಿಜವೇ / ಹೌದಾ (Is it true?)", "standard": "ನಿಜವೇ", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+    "ಮಂದಿ": {"meaning": "ಜನರು (People)", "standard": "ಜನರು", "region": "ಉತ್ತರ ಕಲ್ಯಾಣ"},
+
+    # Malnad (Shivamogga / Chikkamagaluru / Kodagu)
+    "ಎಂತರ": {"meaning": "ಏನು (What)", "standard": "ಏನು", "region": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ"},
+    "ಮಂಡೆ": {"meaning": "ತಲೆ (Head)", "standard": "ತಲೆ", "region": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ"},
+    "ಹೋಗ್ವ": {"meaning": "ಹೋಗೋಣ (Let us go)", "standard": "ಹೋಗೋಣ", "region": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ"},
+    "ಆಯಿತ್ತು": {"meaning": "ಆಯಿತು (Done / Completed)", "standard": "ಆಯಿತು", "region": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ"},
+    "ಚೂರು": {"meaning": "ಸ್ವಲ್ಪ (A little)", "standard": "ಸ್ವಲ್ಪ", "region": "ಮಲೆನಾಡು ಗಿರಿಧಾಮ"},
+
+    # Kaveri Basin (Mandya / Mysuru / Chamarajanagara)
+    "ಆಗ್ಬುಡ್ತು": {"meaning": "ಆಯಿತು (Happened / Done)", "standard": "ಆಯಿತು", "region": "ಕಾವೇರಿ ಕಣಿವೆ"},
+    "ಬಂದ್ಬುಟ್ಟೆ": {"meaning": "ಬಂದೆ (I came)", "standard": "ಬಂದೆ", "region": "ಕಾವೇರಿ ಕಣಿವೆ"},
+    "ಹ್ಯಾಂಗಿದ್ದೀರಪ್ಪ": {"meaning": "ಹೇಗಿದ್ದೀರಿ (How are you)", "standard": "ಹೇಗಿದ್ದೀರಿ", "region": "ಕಾವೇರಿ ಕಣಿವೆ"},
+    "ಸಂತೆ": {"meaning": "ವಾರದ ಮಾರುಕಟ್ಟೆ (Weekly Market)", "standard": "ಮಾರುಕಟ್ಟೆ", "region": "ಕಾವೇರಿ ಕಣಿವೆ"},
+
+    # Tungabhadra (Ballari / Koppal / Raichur)
+    "ಮಸ್ತ್": {"meaning": "ತುಂಬಾ / ಅದ್ಭುತ (A lot / Awesome)", "standard": "ತುಂಬಾ / ಬಹಳ", "region": "ತುಂಗಭದ್ರಾ ತೀರ"},
+    "ಯಾಂಗ್": {"meaning": "ಹೇಗೆ (How)", "standard": "ಹೇಗೆ", "region": "ತುಂಗಭದ್ರಾ ತೀರ"},
+    "ಆತ್ರಿ": {"meaning": "ಆಯಿತು (Done)", "standard": "ಆಯಿತು", "region": "ತುಂಗಭದ್ರಾ ತೀರ"},
+}
+
+
 def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Optional[str] = None) -> dict:
     """
     High-Precision Grounded Kannada RAG Pipeline with Dynamic Dialect Adaptation:
-    1. Extracts intent, quoted phrases, and active region filter.
-    2. Executes Hybrid Retrieval (Lexical exact + Whole-word token overlap + Chroma Dense).
-    3. Handles out-of-domain science/tech and adversarial gibberish cleanly.
-    4. For any arbitrary novel input sentence, adapts it dynamically to the requested regional dialect.
-    5. Formats natural spoken Kannada for Voice TTS.
+    1. Relevance guardrails: filters adversarial nonsense words and out-of-domain science/tech queries.
+    2. Intent classification: meaning query vs. translation/transformation request.
+    3. Direct regional lexicon lookup with authentic cultural explanations.
+    4. Grounded hybrid retrieval on authentic dialect records (skipping generic corpus noise).
+    5. Dynamic dialect adaptation for any novel or everyday sentence.
     """
     # 1. Check for pure non-linguistic science/tech questions
     if is_out_of_domain_science_or_tech(user_q):
@@ -501,78 +551,89 @@ def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Opti
         }
 
     features = extract_query_features(user_q, region, district)
+    target_region = features.get("region") or region
+    quoted = features.get("quoted")
+    core = features.get("core")
+    tokens = features.get("tokens", [])
+
+    is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು ಅರ್ಥ"])
+    is_translation_request = any(
+        k in user_q
+        for k in ["ಹೇಗೆ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುತ್ತಾರೆ", "ಹ್ಯಾಂಗ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ನುಡಿತಾರೆ", "ಶೈಲಿಯಲ್ಲಿ", "ಆಡುಮಾತಿನಲ್ಲಿ", "ಪರಿವರ್ತಿಸಿ", "ಹೇಗೆ ಕೇಳುತ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುವುದು"]
+    )
+
+    # 3. Check Regional Lexicon KB first for meaning queries
+    test_word = quoted or (tokens[0] if len(tokens) == 1 else "")
+    if is_meaning_query and test_word and test_word in REGIONAL_LEXICON_KB:
+        info = REGIONAL_LEXICON_KB[test_word]
+        reg_disp = target_region or info["region"]
+        if "Dharwad" in reg_disp:
+            reg_disp = "ಧಾರವಾಡ"
+        return {
+            "answer": f'ಖಂಡಿತ! {reg_disp} ಉಪಭಾಷೆಯಲ್ಲಿ "{test_word}" ಎಂದರೆ "{info["meaning"]}" ಅಂತ ಅರ್ಥ. ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{info["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.',
+            "source": "regional_lexicon_kb",
+            "score": 1.0,
+            "region_filtered": reg_disp,
+            "method": "direct_lexicon_kb",
+        }
+
+    # 4. Search Grounded Dialect Records (Excluding generic textbook/blog corpus)
     doc_content, doc_meta, score, method = hybrid_retrieve(features)
 
-    # 3. Grounded Retrieval Hit
-    if doc_content and score >= 0.6:
-        parsed = parse_rag_document_content(doc_content, doc_meta or {})
-        if parsed:
-            region_display = parsed.get("region") or features.get("region") or "ಕರ್ನಾಟಕ"
-            if not isinstance(region_display, str):
-                region_display = "ಕರ್ನಾಟಕ"
-            if "Dharwad" in region_display:
-                region_display = "ಧಾರವಾಡ"
+    if doc_content and score >= 0.7:
+        # Strictly ignore generic textbook/blog corpus for dialect inquiries
+        is_generic_corpus = any(
+            marker in doc_content
+            for marker in ["Corpus category: Textbook", "Corpus category: Socio-Educational", "Wikipedia", "Document/topic:"]
+        )
 
-            is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು"])
-            sentences: List[str] = []
+        if not is_generic_corpus:
+            parsed = parse_rag_document_content(doc_content, doc_meta or {})
+            if parsed and parsed.get("type") in ("parallel", "regional_sentence", "lexicon"):
+                region_display = parsed.get("region") or target_region or "ಕರ್ನಾಟಕ"
+                if "Dharwad" in region_display:
+                    region_display = "ಧಾರವಾಡ"
 
-            if parsed["type"] == "lexicon":
-                if is_meaning_query and parsed["meaning"]:
-                    sentences.append(f'"{parsed["regional"]}" ಎಂದರೆ "{parsed["meaning"]}" ಅಂತ ಅರ್ಥ.')
-                    sentences.append(f'{region_display} ಭಾಗದಲ್ಲಿ ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಬಳಸುತ್ತಾರೆ.')
-                    if parsed["standard"]:
-                        sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನುತ್ತಾರೆ.')
-                else:
-                    sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
-                    if parsed["standard"]:
-                        sentences.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}".')
-                    if parsed["meaning"]:
-                        sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
+                if parsed["type"] == "lexicon":
+                    if is_meaning_query:
+                        std_part = f' (ಪ್ರಮಾಣಿತ ಕನ್ನಡ: "{parsed["standard"]}")' if parsed.get("standard") else ""
+                        ans = f'"{parsed["regional"]}" ಎಂದರೆ {region_display} ಭಾಗದಲ್ಲಿ "{parsed["meaning"] or parsed["standard"]}" ಅಂತ ಅರ್ಥ{std_part}.'
+                    else:
+                        ans = f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.'
+                    return {
+                        "answer": ans,
+                        "source": f"rag_{method}",
+                        "score": float(score),
+                        "region_filtered": region_display,
+                        "method": method,
+                    }
 
-            elif parsed["type"] in ("regional_sentence", "parallel"):
-                sentences.append(f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.')
-                if parsed["standard"]:
-                    sentences.append(f'ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{parsed["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.')
-                if parsed["meaning"]:
-                    sentences.append(f'ಅರ್ಥ: {parsed["meaning"]}.')
+                elif parsed["type"] in ("regional_sentence", "parallel"):
+                    ans_parts = [f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು ಈ ರೀತಿ ಹೇಳುತ್ತಾರೆ: "{parsed["regional"]}".']
+                    if parsed.get("standard"):
+                        ans_parts.append(f'(ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}")')
+                    return {
+                        "answer": " ".join(ans_parts),
+                        "source": f"rag_{method}",
+                        "score": float(score),
+                        "region_filtered": region_display,
+                        "method": method,
+                    }
 
-            else:
-                snippet = str(parsed["regional"])[:120].strip()
-                sentences.append(f'ನಮ್ಮ ದತ್ತಾಂಶದ ಪ್ರಕಾರ: {snippet}.')
-                sentences.append('ಇದು ಪ್ರಾದೇಶಿಕ ಕನ್ನಡದ ಅಧಿಕೃತ ಬಳಕೆಯಾಗಿದೆ.')
-
-            is_translation_request = any(
-                k in user_q
-                for k in ["ಹೇಗೆ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುತ್ತಾರೆ", "ಹ್ಯಾಂಗ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ನುಡಿತಾರೆ", "ಶೈಲಿಯಲ್ಲಿ", "ಆಡುಮಾತಿನಲ್ಲಿ", "ಪರಿವರ್ತಿಸಿ", "ಹೇಗೆ ಕೇಳುತ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುವುದು"]
-            )
-
-            # If user wants a dialect translation, do not return random generic corpus blogs
-            if parsed["type"] in ("lexicon", "regional_sentence", "parallel") or not is_translation_request:
-                return {
-                    "answer": " ".join(sentences[:3]),
-                    "source": f"rag_{method}",
-                    "score": float(score),
-                    "region_filtered": features["region"],
-                    "method": method,
-                }
-
-    # 4. Dynamic Dialect Generation for ANY novel input sentence
-    core_sentence = features.get("quoted") or features.get("core") or user_q
-    target_region = features.get("region") or region or "ಉತ್ತರ ಕಲ್ಯಾಣ"
-
-    adapted, region_tag = adapt_sentence_to_dialect(core_sentence, target_region)
+    # 5. Dynamic Dialect Transformer for novel sentences
+    reg_for_transform = target_region or "ಉತ್ತರ ಕಲ್ಯಾಣ"
+    sentence_to_transform = quoted or core or user_q
+    adapted, region_tag = adapt_sentence_to_dialect(sentence_to_transform, reg_for_transform)
 
     answer_parts = [
         f'ಖಂಡಿತ! {region_tag} ಆಡುಮಾತಿನಲ್ಲಿ ಇದನ್ನು ಈ ರೀತಿ ಹೇಳಬಹುದು: "{adapted}".'
     ]
-    if core_sentence != adapted:
-        answer_parts.append(f'ಪ್ರಮಾಣಿತ ರೂಪ: "{core_sentence}".')
 
     return {
         "answer": " ".join(answer_parts),
         "source": "rag_dynamic_generator",
-        "score": 0.88,
-        "region_filtered": str(target_region),
+        "score": 0.90,
+        "region_filtered": str(target_region or "ಉತ್ತರ ಕಲ್ಯಾಣ"),
         "method": "dynamic_dialect_transformer",
     }
 
