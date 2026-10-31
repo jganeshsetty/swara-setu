@@ -1,0 +1,6 @@
+# Tell Vercel to completely ignore the Python backend (it is hosted on Render)
+backend/
+final_best_kannada_rag_dataset.csv
+scripts/
+*.py
+
