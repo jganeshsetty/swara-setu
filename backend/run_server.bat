@@ -6,17 +6,12 @@ echo ===================================================
 echo Starting Swara-Setu Kannada RAG Backend Server...
 echo ===================================================
 
-if not exist "venv\Scripts\python.exe" (
-    echo [ERROR] Virtual environment not found in backend\venv.
-    pause
-    exit /b 1
+if exist "venv\Scripts\python.exe" (
+    echo [INFO] Using virtual environment in backend\venv...
+    venv\Scripts\uvicorn.exe app:app --reload --host 0.0.0.0 --port 8000
+) else (
+    echo [INFO] Using system python...
+    uvicorn app:app --reload --host 0.0.0.0 --port 8000
 )
 
-if not exist "chroma_db" (
-    echo [INFO] ChromaDB not detected. Building vector database first...
-    venv\Scripts\python.exe build_db.py
-)
-
-echo Starting FastAPI server at http://localhost:8000 ...
-venv\Scripts\uvicorn.exe app:app --reload --host 0.0.0.0 --port 8000
 pause

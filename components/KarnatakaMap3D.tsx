@@ -7,6 +7,7 @@ import { Play, Volume2, X, Compass, Sparkles, MapPin, ChevronRight, ChevronLeft,
 
 import { DISTRICT_TO_REGION_MAP, KANNADA_DISTRICT_NAMES } from "@/lib/districtMapping";
 import { subscribeAgentLocationHighlight, dispatchMapDistrictSelect, type LocationHighlightEvent } from "@/lib/agentMapSync";
+import { STATIC_REGION_MAP, STATIC_REGIONS_LIST } from "@/lib/staticRegionData";
 import RegionBentoOverlay from "./RegionBentoOverlay";
 
 export interface RegionData {
@@ -32,7 +33,7 @@ export default function KarnatakaMap3D() {
 
   // GeoJSON & Regions state
   const [geoData, setGeoData] = useState<FeatureCollection<Geometry> | null>(null);
-  const [regionsList, setRegionsList] = useState<RegionData[]>([]);
+  const [regionsList, setRegionsList] = useState<RegionData[]>(STATIC_REGIONS_LIST);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [hoveredDistrictName, setHoveredDistrictName] = useState<string | null>(null);
   const [activeRegionData, setActiveRegionData] = useState<RegionData | null>(null);
@@ -412,19 +413,16 @@ export default function KarnatakaMap3D() {
           });
         });
       } else {
-        // Fallback to region-level query
-        const regionRes = await fetch(`/api/regions?regionId=${regionCode}`);
-        const regionData = await regionRes.json();
-        if (regionData.regions && regionData.regions.length > 0) {
-          startTransition(() => {
-            setActiveRegionData(regionData.regions[0]);
-          });
-        }
+        // Fallback to static region data
+        const fallback = STATIC_REGION_MAP[regionCode] || STATIC_REGION_MAP["kaveri_basin"];
+        startTransition(() => {
+          setActiveRegionData({ ...fallback });
+        });
       }
     } catch (err) {
       console.warn("Falling back to local region cache:", err);
-      const fallback = regionsList.find((r) => r.regionId === regionCode);
-      if (fallback) setActiveRegionData(fallback);
+      const fallback = STATIC_REGION_MAP[regionCode] || regionsList.find((r) => r.regionId === regionCode) || STATIC_REGION_MAP["kaveri_basin"];
+      if (fallback) setActiveRegionData({ ...fallback });
     } finally {
       setIsLoadingSentences(false);
     }
