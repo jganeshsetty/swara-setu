@@ -20,18 +20,31 @@
   html, body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    height: 100%;
     width: 100%;
-    background: #FFFDF0;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    color: #1c1917;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+}
 
-  #__next, main {
-    height: 100%;
-    width: 100%;
-  }
+.bg-grid-editorial {
+  background-size: 36px 36px;
+  background-image: radial-gradient(circle, #D4D4CE 0.8px, transparent 0.8px);
+}
+
+.karnataka-stripe {
+  background: linear-gradient(180deg, #EAAA08 50%, #D92D20 50%);
+}
+
+.kannada-text {
+  font-family: 'Noto Sans Kannada', sans-serif;
+}
+
+.kannada-classic {
+  font-family: 'Tiro Kannada', serif;
+}
+
+.status-pulse {
+  animation: subtle-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Custom scrollbar for the glassmorphic drawers */

@@ -1,0 +1,622 @@
+{
+  "uttara_kalyana": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾ",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಭಾಳ",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ನಿನ್ನೆ",
+      "regional": "ನಿನ್ನಿ",
+      "meaning": "yesterday"
+    },
+    {
+      "textbook": "ಬೆಳಿಗ್ಗೆ",
+      "regional": "ಮುಂಜಾನಿ",
+      "meaning": "morning"
+    },
+    {
+      "textbook": "ಮಳೆ",
+      "regional": "ಮಳಿ",
+      "meaning": "rain"
+    },
+    {
+      "textbook": "ಈರುಳ್ಳಿ",
+      "regional": "ಉಳ್ಳಾಗಡ್ಡಿ",
+      "meaning": "onion"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹ್ಯಾಂಗದೀರಿ?",
+      "meaning": "How are you?"
+    }
+  ],
+  "tungabhadra_belt": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾ",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಭಾಳ",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ನಿನ್ನೆ",
+      "regional": "ನಿನ್ನಿ",
+      "meaning": "yesterday"
+    },
+    {
+      "textbook": "ಬೆಳಿಗ್ಗೆ",
+      "regional": "ಮುಂಜಾನೆ",
+      "meaning": "morning"
+    },
+    {
+      "textbook": "ಮಳೆ",
+      "regional": "ಮಳಿ",
+      "meaning": "rain"
+    },
+    {
+      "textbook": "ಈರುಳ್ಳಿ",
+      "regional": "ಉಳ್ಳಾಗಡ್ಡಿ",
+      "meaning": "onion"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹೆಂಗಿದೀರಿ?",
+      "meaning": "How are you?"
+    }
+  ],
+  "krishna_valley": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾ",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಬಾಳ",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್ತ",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ನಿನ್ನೆ",
+      "regional": "ನಿನ್ನಿ",
+      "meaning": "yesterday"
+    },
+    {
+      "textbook": "ಬೆಳಿಗ್ಗೆ",
+      "regional": "ಮುಂಜಾನಿ",
+      "meaning": "morning"
+    },
+    {
+      "textbook": "ಮಳೆ",
+      "regional": "ಮಳಿ",
+      "meaning": "rain"
+    },
+    {
+      "textbook": "ಈರುಳ್ಳಿ",
+      "regional": "ಉಳ್ಳಾಗಡ್ಡಿ",
+      "meaning": "onion"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟು",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವು ಹ್ಯಾಂಗಿದ್ದೀರಿ?",
+      "meaning": "How are you?"
+    }
+  ],
+  "hubballi_heartland": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾ",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಭಾಳ",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ನಿನ್ನೆ",
+      "regional": "ನಿನ್ನಿ",
+      "meaning": "yesterday"
+    },
+    {
+      "textbook": "ಬೆಳಿಗ್ಗೆ",
+      "regional": "ಮುಂಜಾನಿ",
+      "meaning": "morning"
+    },
+    {
+      "textbook": "ಮಳೆ",
+      "regional": "ಮಳಿ",
+      "meaning": "rain"
+    },
+    {
+      "textbook": "ಈರುಳ್ಳಿ",
+      "regional": "ಉಳ್ಳಾಗಡ್ಡಿ",
+      "meaning": "onion"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ಹೆಂಗಿದಿಪಾ?",
+      "meaning": "How are you?"
+    }
+  ],
+  "karavali_coast": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾನ್",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಫುಲ್",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್ತು",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಈರುಳ್ಳಿ",
+      "regional": "ನೀರುಳ್ಳಿ",
+      "meaning": "onion"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಪೇಟೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟು",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವು ಹೆಂಗಿದ್ದೀರಿ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗ್ ಹೋಪದು?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆತಾ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಂತ ಮಾಡ್ತಾ ಇದ್ದೀರಿ?",
+      "meaning": "What are you doing?"
+    }
+  ],
+  "malnad_ghats": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾನ್",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಫುಲ್",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಪೇಟೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹೆಂಗಿದ್ದೀರಿ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗ್ ಹೋಗ್ತಿದ್ದೀಯಾ?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆಯ್ತಾ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಏನ್ ಮಾಡ್ತಿದ್ದೀಯಾ?",
+      "meaning": "What are you doing?"
+    },
+    {
+      "textbook": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "regional": "ಇಲ್ಲಿಗೆ ಬಾ",
+      "meaning": "Come here"
+    }
+  ],
+  "bayalu_seeme": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾನ್",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹೆಂಗಿದ್ದೀರಾ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗ್ ಹೋಗ್ತಾ ಇದ್ದೀಯಾ?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆಯ್ತಾ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಏನ್ ಮಾಡ್ತಾ ಇದ್ದೀಯಾ?",
+      "meaning": "What are you doing?"
+    },
+    {
+      "textbook": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "regional": "ಇಲ್ ಬಾ",
+      "meaning": "Come here"
+    },
+    {
+      "textbook": "ನನಗೆ ತಿಳಿದಿಲ್ಲ",
+      "regional": "ನಂಗೆ ಗೊತ್ತಿಲ್ಲ",
+      "meaning": "I don't know"
+    }
+  ],
+  "kaveri_basin": [
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ತುಂಬಾ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್ತು",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವು ಹೇಗಿದ್ದೀರಾ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗೆ ಹೋಗ್ತಾ ಇದ್ದೀರಾ?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆಯ್ತಾ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಏನ್ ಮಾಡ್ತಾ ಇದ್ದೀರಾ?",
+      "meaning": "What are you doing?"
+    },
+    {
+      "textbook": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "regional": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "meaning": "Come here"
+    },
+    {
+      "textbook": "ನನಗೆ ತಿಳಿದಿಲ್ಲ",
+      "regional": "ನನಗೆ ಗೊತ್ತಿಲ್ಲ",
+      "meaning": "I don't know"
+    },
+    {
+      "textbook": "ನಾನು ಮನೆಗೆ ಹೋಗುತ್ತಿದ್ದೇನೆ",
+      "regional": "ನಾನು ಮನೆಗೆ ಹೋಗ್ತಾ ಇದೀನಿ",
+      "meaning": "I am going home"
+    },
+    {
+      "textbook": "ನಿಮ್ಮ ಹೆಸರು ಏನು?",
+      "regional": "ನಿಮ್ಮ ಹೆಸರೇನು?",
+      "meaning": "What is your name?"
+    },
+    {
+      "textbook": "ಇದರ ಬೆಲೆ ಎಷ್ಟು?",
+      "regional": "ಇದಕ್ಕೆ ಎಷ್ಟು?",
+      "meaning": "How much does this cost?"
+    }
+  ],
+  "dakshina_ghats": [
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್ತು",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಸಂತೆ",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹೆಂಗಿದೀರಾ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗ್ ಹೋಗ್ತಾಯಿದ್ದೀಯಪ್ಪ?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆಯ್ತೇನಪ್ಪ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಏನ್ ಮಾಡ್ತಾಯಿದೀಯಾ?",
+      "meaning": "What are you doing?"
+    },
+    {
+      "textbook": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "regional": "ಇಲ್ ಬಾರಪ್ಪ",
+      "meaning": "Come here"
+    },
+    {
+      "textbook": "ನನಗೆ ತಿಳಿದಿಲ್ಲ",
+      "regional": "ನಂಗ್ ಗೊತ್ತಿಲ್ಲ ಕಣಪ್ಪ",
+      "meaning": "I don't know"
+    },
+    {
+      "textbook": "ನಾನು ಮನೆಗೆ ಹೋಗುತ್ತಿದ್ದೇನೆ",
+      "regional": "ನಾನ್ ಮನೆಗ್ ಹೋಯ್ತಾಯಿದೀನಿ",
+      "meaning": "I am going home"
+    },
+    {
+      "textbook": "ನಿಮ್ಮ ಹೆಸರು ಏನು?",
+      "regional": "ನಿನ್ ಹೆಸರೇನಪ್ಪಾ?",
+      "meaning": "What is your name?"
+    }
+  ],
+  "kolar_bengaluru": [
+    {
+      "textbook": "ನಾನು",
+      "regional": "ನಾನ್",
+      "meaning": "I"
+    },
+    {
+      "textbook": "ಹೆಚ್ಚು",
+      "regional": "ಜಾಸ್ತಿ",
+      "meaning": "more; much"
+    },
+    {
+      "textbook": "ಕಡಿಮೆ",
+      "regional": "ಕಮ್ಮಿ",
+      "meaning": "less; little"
+    },
+    {
+      "textbook": "ತುಂಬಾ",
+      "regional": "ಫುಲ್",
+      "meaning": "very; a lot"
+    },
+    {
+      "textbook": "ಇಂದು",
+      "regional": "ಇವತ್ತು",
+      "meaning": "today"
+    },
+    {
+      "textbook": "ಮಾರುಕಟ್ಟೆ",
+      "regional": "ಮಾರ್ಕೆಟ್",
+      "meaning": "market"
+    },
+    {
+      "textbook": "ಬೆಲೆ",
+      "regional": "ರೇಟ್",
+      "meaning": "price"
+    },
+    {
+      "textbook": "ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+      "regional": "ನೀವ್ ಹೆಂಗಿದ್ದೀರಾ?",
+      "meaning": "How are you?"
+    },
+    {
+      "textbook": "ನೀವು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಎಲ್ಲಿಗ್ ಹೋಗ್ತಿದೀಯಾ?",
+      "meaning": "Where are you going?"
+    },
+    {
+      "textbook": "ನೀವು ಊಟ ಮಾಡಿದ್ದೀರಾ?",
+      "regional": "ಊಟ ಆಯ್ತಾ?",
+      "meaning": "Have you eaten?"
+    },
+    {
+      "textbook": "ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?",
+      "regional": "ಏನ್ ಮಾಡ್ತಿದೀಯಾ?",
+      "meaning": "What are you doing?"
+    },
+    {
+      "textbook": "ಇಲ್ಲಿಗೆ ಬನ್ನಿ",
+      "regional": "ಇಲ್ ಬನ್ನಿ",
+      "meaning": "Come here"
+    }
+  ]
+}

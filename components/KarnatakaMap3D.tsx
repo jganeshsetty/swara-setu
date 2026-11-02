@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, useMemo } from "react";
+import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Geometry } from "geojson";
 import { Play, Volume2, X, Compass, Sparkles, MapPin, ChevronRight, ChevronLeft, Layers, RotateCcw, ZoomIn, ZoomOut, Info, BookOpen, MousePointer, HelpCircle, Users, Landmark, Languages, Radio, CheckCircle2 } from "lucide-react";
@@ -476,37 +477,59 @@ export default function KarnatakaMap3D() {
         <div className="h-full w-1/2 bg-[#D1262B]" title="ಕುಂಕುಮ (ಕೆಂಪು)" />
       </div>
 
-      {/* ── 2. Subtle Ambient Cultural Background Layers ── */}
-      <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+      {/* ── 2. Subtle Ambient Cultural Background Layers with Backside Karnataka Map ── */}
+      <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden flex items-center justify-center">
         {/* Top Arishina / Golden Yellow Ambient Aura */}
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-b from-[#FFE500]/16 via-[#F5B700]/7 to-transparent rounded-full blur-3xl" />
         
         {/* Bottom Kumkuma / Vermilion Red Warm Aura */}
         <div className="absolute -bottom-36 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-t from-[#D1262B]/12 via-[#E63946]/5 to-transparent rounded-full blur-3xl" />
 
+        {/* Backside Karnataka Map Silhouette Ambient Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <img
+            src="/karnataka-real-map.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-[520px] max-w-[75vw] max-h-[75vh] object-contain opacity-[0.06] filter blur-[0.2px] select-none pointer-events-none"
+          />
+        </div>
+
         {/* Subtle Heritage Dot Grid Matrix */}
         <div className="absolute inset-0 opacity-[0.25] bg-[radial-gradient(#b45309_0.8px,transparent_0.8px)] [background-size:26px_26px]" />
       </div>
 
-      {/* ── 3. Top Header & Info Guide Toggle (Fixed at Top, Never Disturbs Map) ── */}
+      {/* ── 3. Unified Top Header (Back Button + Logo + Title, Zero Overlap) ── */}
       {!activeRegionData && (
         <>
-          <header className="absolute top-2.5 sm:top-5 left-3 sm:left-6 z-20 pointer-events-auto flex items-center gap-2 sm:gap-3 transition-opacity duration-300">
-            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-400/20 border border-amber-500/40 backdrop-blur-xl flex items-center justify-center text-amber-700 shadow-[0_8px_20px_rgba(255,183,0,0.22)] shrink-0">
-              <Compass className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="font-serif text-sm sm:text-lg font-bold text-stone-900 tracking-tight flex items-center gap-1.5">
-                  ಸ್ವರಸೇತು
-                  <span className="font-sans text-[9px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FFE500] to-[#E63946] text-stone-950 shadow-xs border border-amber-300/80">
-                    ನಮ್ಮ ಕನ್ನಡ
-                  </span>
-                </h1>
+          <header className="absolute top-2 sm:top-4 left-2 sm:left-5 z-20 pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 transition-opacity duration-300">
+            {/* Unified Back to Landing Button */}
+            <Link
+              href="/"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/95 hover:bg-white text-stone-900 border border-stone-200/90 hover:border-amber-400 shadow-xs text-xs font-semibold hover:shadow-md transition-all active:scale-95 group shrink-0"
+              title="ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ (Back to Landing)"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-karnataka-crimson transition-transform group-hover:-translate-x-0.5" />
+              <span className="kannada-text text-[11px] sm:text-xs">ಮುಖಪುಟ</span>
+            </Link>
+
+            {/* Brand Logo & Title Container */}
+            <div className="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-1.5 pr-2.5 sm:pr-3 py-1 rounded-xl backdrop-blur-xl bg-white/90 border border-amber-300/60 shadow-xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 p-0.5 flex items-center justify-center shrink-0">
+                <img
+                  src="/karnataka-logo.svg"
+                  alt="ಕರ್ನಾಟಕ ಲಾಂಛನ"
+                  className="w-full h-full object-contain filter drop-shadow-xs select-none"
+                />
               </div>
-              <p className="text-[9px] sm:text-[11px] text-stone-600 tracking-wide font-medium hidden xs:block">
-                ಪ್ರಾದೇಶಿಕ ಉಪಭಾಷಾ ಪರಿಶೋಧಕ • ತಿರುಗಿಸಲು ಮೌಸ್ / ಟಚ್ ಎಳೆಯಿರಿ
-              </p>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <h1 className="font-serif text-xs sm:text-base font-bold text-stone-900 tracking-tight">
+                  ಸ್ವರಸೇತು
+                </h1>
+                <span className="font-sans text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFE500] to-[#E63946] text-stone-950 shadow-xs border border-amber-300/80 hidden xs:inline-block">
+                  ನಮ್ಮ ಕನ್ನಡ
+                </span>
+              </div>
             </div>
           </header>
 

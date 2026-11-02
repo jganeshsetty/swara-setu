@@ -23,6 +23,10 @@ import math
 from collections import Counter
 
 # Load .env file
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+_backend_env = os.path.join(_backend_dir, ".env")
+if os.path.exists(_backend_env):
+    load_dotenv(_backend_env)
 load_dotenv()
 
 app = FastAPI(

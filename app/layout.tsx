@@ -22,16 +22,16 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="kn" className="h-full w-full">
+    <html lang="kn" className="h-full w-full scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+Kannada:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Serif+Kannada:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Tiro+Kannada:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans h-full w-full overflow-hidden">
+      <body className="font-sans min-h-screen w-full bg-paper text-ink-900 selection:bg-karnataka-gold-light selection:text-ink-900">
         {children}
       </body>
     </html>
