@@ -180,3 +180,4 @@ export const STATIC_REGIONS_LIST: StaticRegionData[] = Object.values(STATIC_REGI
 const outputPath = path.resolve(__dirname, '..', 'lib', 'staticRegionData.ts');
 fs.writeFileSync(outputPath, tsContent, 'utf-8');
 console.log(`Successfully generated ${outputPath} with all 300 authentic sentences!`);
+

@@ -23,14 +23,9 @@
     overflow: hidden;
     height: 100%;
     width: 100%;
-    background: radial-gradient(
-      circle at 50% 30%,
-      var(--obsidian-700) 0%,
-      var(--obsidian-900) 70%,
-      var(--obsidian-900) 100%
-    );
+    background: #FFFDF0;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    color: #f5f0ec;
+    color: #1c1917;
   }
 
   #__next, main {

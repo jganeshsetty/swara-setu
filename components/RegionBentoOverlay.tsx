@@ -290,8 +290,8 @@ export default function RegionBentoOverlay({
                   <span>ಹಿಂದಿನದು</span>
                 </button>
 
-                {/* Page Indicator Dot Pills */}
-                <div className="flex items-center gap-1 px-1">
+                {/* Page Indicator Dot Pills (Desktop) */}
+                <div className="hidden md:flex items-center gap-1 px-1">
                   {Array.from({ length: totalPages }).map((_, idx) => {
                     const pageNum = idx + 1;
                     const isActive = pageNum === currentPage;

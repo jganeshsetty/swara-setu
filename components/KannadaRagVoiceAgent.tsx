@@ -21,8 +21,6 @@ import {
 } from "lucide-react";
 
 import {
-  detectLocationFromText,
-  dispatchAgentLocationHighlight,
   subscribeMapDistrictSelect,
   type MapDistrictSelectEvent,
 } from "@/lib/agentMapSync";
@@ -287,13 +285,6 @@ export default function KannadaRagVoiceAgent() {
 
       if (data.answer) {
         setConversation((prev) => [...prev, { role: "assistant", text: data.answer! }]);
-        
-        // Agent-to-Map real-time synchronization
-        const detectedLoc = detectLocationFromText(data.answer) || detectLocationFromText(q);
-        if (detectedLoc) {
-          dispatchAgentLocationHighlight(detectedLoc);
-        }
-
         speakKannada(data.answer);
       } else if (data.error) {
         setConversation((prev) => [
