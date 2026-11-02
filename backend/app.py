@@ -520,15 +520,25 @@ REGIONAL_LEXICON_KB: Dict[str, Dict[str, str]] = {
     "ಆತ್ರಿ": {"meaning": "ಆಯಿತು (Done)", "standard": "ಆಯಿತು", "region": "ತುಂಗಭದ್ರಾ ತೀರ"},
 }
 
+from nvidia_rag_pipeline import ContextLockedRAGPipeline
+
+# Initialize Context-Locked NVIDIA NIM RAG Pipeline
+nvidia_rag_engine = ContextLockedRAGPipeline(
+    df_dataset=df_dataset,
+    bm25_engine=bm25_engine,
+    region_metadata_map=REGION_METADATA_MAP,
+    regional_lexicon_kb=REGIONAL_LEXICON_KB,
+)
+
 
 def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Optional[str] = None) -> dict:
     """
-    High-Precision Grounded Kannada RAG Pipeline with Dynamic Dialect Adaptation:
+    3-Stage Context-Locked NVIDIA NIM RAG Pipeline:
     1. Relevance guardrails: filters adversarial nonsense words and out-of-domain science/tech queries.
-    2. Intent classification: meaning query vs. translation/transformation request.
-    3. Direct regional lexicon lookup with authentic cultural explanations.
-    4. Grounded hybrid retrieval on authentic dialect records (skipping generic corpus noise).
-    5. Dynamic dialect adaptation for any novel or everyday sentence.
+    2. ContextLockedRAGPipeline execution:
+       - Stage A: Pre-Retrieval Query Normalizer (NVIDIA NIM LLM)
+       - Stage B: Hybrid Retrieval + Hard Similarity Gatekeeper (Zero LLM Knowledge)
+       - Stage C: Context-Locked Generation & Citation Verification (NVIDIA NIM LLM)
     """
     # 1. Check for pure non-linguistic science/tech questions
     if is_out_of_domain_science_or_tech(user_q):
@@ -538,6 +548,8 @@ def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Opti
             "score": 0.0,
             "region_filtered": None,
             "method": "science_guard",
+            "grounded": False,
+            "sources": [],
         }
 
     # 2. Check for adversarial nonsense words
@@ -548,94 +560,17 @@ def query_rag_pipeline(user_q: str, region: Optional[str] = None, district: Opti
             "score": 0.0,
             "region_filtered": None,
             "method": "gibberish_guard",
+            "grounded": False,
+            "sources": [],
         }
 
-    features = extract_query_features(user_q, region, district)
-    target_region = features.get("region") or region
-    quoted = features.get("quoted")
-    core = features.get("core")
-    tokens = features.get("tokens", [])
-
-    is_meaning_query = any(k in user_q for k in ["ಅರ್ಥ", "meaning", "ಅಂದ್ರೆ", "ಅಂದರೆ", "ಏನು ಅರ್ಥ"])
-    is_translation_request = any(
-        k in user_q
-        for k in ["ಹೇಗೆ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುತ್ತಾರೆ", "ಹ್ಯಾಂಗ ಹೇಳ್ತಾರೆ", "ಹೇಗೆ ನುಡಿತಾರೆ", "ಶೈಲಿಯಲ್ಲಿ", "ಆಡುಮಾತಿನಲ್ಲಿ", "ಪರಿವರ್ತಿಸಿ", "ಹೇಗೆ ಕೇಳುತ್ತಾರೆ", "ಹೇಗೆ ಹೇಳುವುದು"]
+    # 3. Execute Context-Locked 3-Stage Pipeline
+    result = nvidia_rag_engine.execute(user_q, region=region, district=district)
+    print(
+        f"[RAG API] query='{user_q}' | method={result.get('method')} | "
+        f"grounded={result.get('grounded')} | score={result.get('score')} | sources={len(result.get('sources', []))}"
     )
-
-    # 3. Check Regional Lexicon KB first for meaning queries
-    test_word = quoted or (tokens[0] if len(tokens) == 1 else "")
-    if is_meaning_query and test_word and test_word in REGIONAL_LEXICON_KB:
-        info = REGIONAL_LEXICON_KB[test_word]
-        reg_disp = target_region or info["region"]
-        if "Dharwad" in reg_disp:
-            reg_disp = "ಧಾರವಾಡ"
-        return {
-            "answer": f'ಖಂಡಿತ! {reg_disp} ಉಪಭಾಷೆಯಲ್ಲಿ "{test_word}" ಎಂದರೆ "{info["meaning"]}" ಅಂತ ಅರ್ಥ. ಪ್ರಮಾಣಿತ ಕನ್ನಡದಲ್ಲಿ ಇದನ್ನು "{info["standard"]}" ಎನ್ನಲಾಗುತ್ತದೆ.',
-            "source": "regional_lexicon_kb",
-            "score": 1.0,
-            "region_filtered": reg_disp,
-            "method": "direct_lexicon_kb",
-        }
-
-    # 4. Search Grounded Dialect Records (Excluding generic textbook/blog corpus)
-    doc_content, doc_meta, score, method = hybrid_retrieve(features)
-
-    if doc_content and score >= 0.7:
-        # Strictly ignore generic textbook/blog corpus for dialect inquiries
-        is_generic_corpus = any(
-            marker in doc_content
-            for marker in ["Corpus category: Textbook", "Corpus category: Socio-Educational", "Wikipedia", "Document/topic:"]
-        )
-
-        if not is_generic_corpus:
-            parsed = parse_rag_document_content(doc_content, doc_meta or {})
-            if parsed and parsed.get("type") in ("parallel", "regional_sentence", "lexicon"):
-                region_display = parsed.get("region") or target_region or "ಕರ್ನಾಟಕ"
-                if "Dharwad" in region_display:
-                    region_display = "ಧಾರವಾಡ"
-
-                if parsed["type"] == "lexicon":
-                    if is_meaning_query:
-                        std_part = f' (ಪ್ರಮಾಣಿತ ಕನ್ನಡ: "{parsed["standard"]}")' if parsed.get("standard") else ""
-                        ans = f'"{parsed["regional"]}" ಎಂದರೆ {region_display} ಭಾಗದಲ್ಲಿ "{parsed["meaning"] or parsed["standard"]}" ಅಂತ ಅರ್ಥ{std_part}.'
-                    else:
-                        ans = f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು "{parsed["regional"]}" ಎಂದು ಹೇಳುತ್ತಾರೆ.'
-                    return {
-                        "answer": ans,
-                        "source": f"rag_{method}",
-                        "score": float(score),
-                        "region_filtered": region_display,
-                        "method": method,
-                    }
-
-                elif parsed["type"] in ("regional_sentence", "parallel"):
-                    ans_parts = [f'ಖಂಡಿತ! {region_display} ಶೈಲಿಯಲ್ಲಿ ಇದನ್ನು ಈ ರೀತಿ ಹೇಳುತ್ತಾರೆ: "{parsed["regional"]}".']
-                    if parsed.get("standard"):
-                        ans_parts.append(f'(ಪ್ರಮಾಣಿತ ರೂಪ: "{parsed["standard"]}")')
-                    return {
-                        "answer": " ".join(ans_parts),
-                        "source": f"rag_{method}",
-                        "score": float(score),
-                        "region_filtered": region_display,
-                        "method": method,
-                    }
-
-    # 5. Dynamic Dialect Transformer for novel sentences
-    reg_for_transform = target_region or "ಉತ್ತರ ಕಲ್ಯಾಣ"
-    sentence_to_transform = quoted or core or user_q
-    adapted, region_tag = adapt_sentence_to_dialect(sentence_to_transform, reg_for_transform)
-
-    answer_parts = [
-        f'ಖಂಡಿತ! {region_tag} ಆಡುಮಾತಿನಲ್ಲಿ ಇದನ್ನು ಈ ರೀತಿ ಹೇಳಬಹುದು: "{adapted}".'
-    ]
-
-    return {
-        "answer": " ".join(answer_parts),
-        "source": "rag_dynamic_generator",
-        "score": 0.90,
-        "region_filtered": str(target_region or "ಉತ್ತರ ಕಲ್ಯಾಣ"),
-        "method": "dynamic_dialect_transformer",
-    }
+    return result
 
 
 @app.get("/")
@@ -643,7 +578,7 @@ def read_root():
     return {
         "status": "online",
         "service": "Swara-Setu Multilingual Hybrid Kannada RAG API",
-        "engine": "Lightweight BM25 + Dynamic Dialect Transformer",
+        "engine": "3-Stage Context-Locked NVIDIA NIM RAG Engine",
         "dataset_records": len(df_dataset),
     }
 
@@ -662,13 +597,21 @@ async def ask_question(query: UserQuery):
     try:
         user_q = query.question.strip()
         if not user_q:
-            return {"error": "ಖಾಲಿ ಪ್ರಶ್ನೆಯನ್ನು ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ (Empty question)."}
+            return {
+                "error": "ಖಾಲಿ ಪ್ರಶ್ನೆಯನ್ನು ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ (Empty question).",
+                "grounded": False,
+                "sources": [],
+            }
 
         result = query_rag_pipeline(user_q, region=query.region, district=query.district)
         return result
 
     except Exception as e:
-        return {"error": str(e)}
+        return {
+            "error": str(e),
+            "grounded": False,
+            "sources": [],
+        }
 
 
 class TtsPayload(BaseModel):

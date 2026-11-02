@@ -28,6 +28,11 @@ import {
 interface RagResponse {
   answer?: string;
   error?: string;
+  grounded?: boolean;
+  sources?: any[];
+  source?: string;
+  score?: number;
+  method?: string;
 }
 
 const KANNADA_SAMPLE_PROMPTS = [
