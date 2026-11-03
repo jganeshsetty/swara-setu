@@ -66,34 +66,34 @@ export default function InteractiveHeroMap() {
   const [selectedDialect, setSelectedDialect] = useState<DialectPreview>(DIALECT_PREVIEWS[0]);
 
   return (
-    <div className="relative bg-surface/95 dark:bg-[#161310]/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-hairline dark:border-stone-800/80 shadow-md hover:shadow-lg transition-all duration-300 w-full max-w-full overflow-hidden">
+    <div className="relative bg-surface/95 dark:bg-[#161310]/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-6 border border-hairline dark:border-stone-800/80 shadow-md hover:shadow-lg transition-all duration-300 w-full max-w-full overflow-hidden">
       {/* ── 1. Floating Quick Badges (Safely bounded for mobile & dark mode) ── */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-500/40 shadow-2xs text-[11px] font-bold text-stone-900 dark:text-stone-100">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+      <div className="flex items-center justify-between gap-1.5 mb-2.5 sm:mb-3">
+        <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-500/40 shadow-2xs text-[10px] sm:text-[11px] font-bold text-stone-900 dark:text-stone-100">
+          <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-500 animate-pulse shrink-0" />
           <span className="kannada-text">೧೦ ಪ್ರಾದೇಶಿಕ ಶೈಲಿಗಳು</span>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-karnataka-crimson/30 dark:border-red-500/30 shadow-2xs text-[11px] font-bold text-ink-900 dark:text-stone-100">
+        <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-karnataka-crimson/30 dark:border-red-500/30 shadow-2xs text-[10px] sm:text-[11px] font-bold text-ink-900 dark:text-stone-100">
           <div className="flex items-center gap-0.5">
-            <span className="w-1 h-2.5 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "0ms" }} />
-            <span className="w-1 h-3.5 rounded-full bg-karnataka-gold animate-waveform" style={{ animationDelay: "150ms" }} />
-            <span className="w-1 h-2 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "300ms" }} />
+            <span className="w-1 h-2 sm:h-2.5 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "0ms" }} />
+            <span className="w-1 h-3 sm:h-3.5 rounded-full bg-karnataka-gold animate-waveform" style={{ animationDelay: "150ms" }} />
+            <span className="w-1 h-2 sm:h-2.5 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "300ms" }} />
           </div>
           <span className="kannada-text">ಧ್ವನಿ ಸಂವಾದ</span>
         </div>
       </div>
 
       {/* ── 2. Header Status Strip ── */}
-      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-hairline dark:border-stone-800 text-xs font-mono text-ink-500 dark:text-stone-400">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pb-2 sm:pb-2.5 mb-2.5 sm:mb-3 border-b border-hairline dark:border-stone-800 text-xs font-mono text-ink-500 dark:text-stone-400">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Compass className="w-3.5 h-3.5 text-karnataka-crimson animate-spin" style={{ animationDuration: "18s" }} />
-          <span className="tracking-wider text-[11px] font-semibold text-ink-700 dark:text-stone-300">
+          <span className="tracking-wider text-[10px] sm:text-[11px] font-semibold text-ink-700 dark:text-stone-300">
             ಕರ್ನಾಟಕ • 31 DISTRICTS
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[11px]">ಲೈವ್ ನಕಾಶೆ</span>
+          <span className="text-emerald-700 dark:text-emerald-400 font-bold text-[10px] sm:text-[11px]">ಲೈವ್ ನಕಾಶೆ</span>
         </div>
       </div>
 
@@ -103,11 +103,11 @@ export default function InteractiveHeroMap() {
         <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 dark:from-amber-400/10 via-transparent to-red-600/5 dark:to-red-600/10 pointer-events-none" />
 
         {/* The Exact Geographically Correct Vector Map SVG */}
-        <div className="relative w-full max-h-[260px] sm:max-h-[340px] flex items-center justify-center">
+        <div className="relative w-full max-h-[220px] sm:max-h-[340px] flex items-center justify-center">
           <img
             src="/karnataka-real-map.svg"
             alt="ಕರ್ನಾಟಕ ನಕಾಶೆ"
-            className="w-full h-auto max-h-[250px] sm:max-h-[330px] object-contain drop-shadow-sm select-none group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+            className="w-full h-auto max-h-[210px] sm:max-h-[330px] object-contain drop-shadow-sm select-none group-hover:scale-[1.02] transition-transform duration-500 ease-out"
           />
 
           {/* Interactive Radar Beacon on the Map */}

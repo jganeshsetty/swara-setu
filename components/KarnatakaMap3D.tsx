@@ -206,6 +206,10 @@ export default function KarnatakaMap3D() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      scaleRef.current = 0.88;
+      setCurrentScale(0.88);
+    }
     applyTransform();
   }, []);
 
@@ -448,9 +452,11 @@ export default function KarnatakaMap3D() {
   };
 
   const resetView = () => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+    const defaultScale = isMobile ? 0.88 : 1.0;
     rotationRef.current = { x: 20, y: -14, z: -2.5 };
-    scaleRef.current = 1.0;
-    setCurrentScale(1.0);
+    scaleRef.current = defaultScale;
+    setCurrentScale(defaultScale);
     if (mapSvgGroupRef.current) {
       mapSvgGroupRef.current.style.transition = "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
       applyTransform();
@@ -791,7 +797,7 @@ export default function KarnatakaMap3D() {
 
       {/* 3D Map SVG Canvas */}
       <div
-        className="w-full h-full flex justify-center items-center"
+        className="w-full h-full flex justify-center items-center pb-12 sm:pb-0 transition-transform"
         style={{
           transformStyle: "preserve-3d",
         }}

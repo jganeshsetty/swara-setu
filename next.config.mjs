@@ -4,6 +4,9 @@ const nextConfig = {
   // Three.js / d3-geo ship as ESM client bundles; keep them out of the server bundle.
   experimental: {
     serverComponentsExternalPackages: ["mongoose", "@google/genai"],
+    outputFileTracingExcludes: {
+      "*": ["./backend/**/*", "./swara-walkthrough/**/*"],
+    },
   },
   async rewrites() {
     const backendUrl =

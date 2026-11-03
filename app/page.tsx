@@ -91,24 +91,24 @@ export default function StitchLandingPage() {
       </div>
 
       {/* ── 2. Mobile-Friendly Global Navbar with Theme Toggle ── */}
-      <header className="sticky top-1.5 z-50 backdrop-blur-md bg-paper/95 dark:bg-[#12100E]/95 border-b border-hairline/80 dark:border-stone-800 py-2 sm:py-2.5 transition-all duration-200 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+      <header className="sticky top-1.5 z-50 backdrop-blur-md bg-paper/95 dark:bg-[#12100E]/95 border-b border-hairline/80 dark:border-stone-800 py-1.5 sm:py-2.5 transition-all duration-200 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-13 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
           {/* Brand Logo with Karnataka Map Shape Badge */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0" data-purpose="brand-logo">
-            <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-red-600/15 border border-amber-500/40 dark:border-amber-400/30 p-1 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-all">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group shrink min-w-0" data-purpose="brand-logo">
+            <div className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-red-600/15 border border-amber-500/40 dark:border-amber-400/30 p-0.5 sm:p-1 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-all">
               <img
                 src="/karnataka-logo.svg"
                 alt="ಕರ್ನಾಟಕ ಲಾಂಛನ"
                 className="w-full h-full object-contain filter drop-shadow-2xs select-none"
               />
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-stone-900 animate-pulse" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-stone-900 animate-pulse" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-baseline gap-1.5 sm:gap-2">
-                <span className="font-bold text-base sm:text-xl tracking-tight text-ink-900 dark:text-stone-100 group-hover:text-karnataka-crimson transition-colors">
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-baseline gap-1 sm:gap-2">
+                <span className="font-bold text-sm sm:text-xl tracking-tight text-ink-900 dark:text-stone-100 group-hover:text-karnataka-crimson transition-colors truncate">
                   Swara-Setu
                 </span>
-                <span className="kannada-text text-[11px] sm:text-xs px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-ink-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-700/60">
+                <span className="kannada-text text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-ink-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-700/60 hidden min-[400px]:inline-block">
                   ಸ್ವರಸೇತು
                 </span>
               </div>
@@ -119,19 +119,19 @@ export default function StitchLandingPage() {
           </Link>
 
           {/* Right Header Actions: Theme Toggle + Bilingual Switcher + Compact Mobile CTA */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0" data-purpose="header-actions">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0" data-purpose="header-actions">
             {/* Dark / Light Mode Toggle Button */}
             <ThemeToggle />
 
             {/* Language Switcher */}
             <div
-              className="flex items-center p-0.5 rounded-full border border-hairline dark:border-stone-800 bg-surface dark:bg-stone-900/80 shadow-2xs text-xs font-semibold"
+              className="flex items-center p-0.5 rounded-full border border-hairline dark:border-stone-800 bg-surface dark:bg-stone-900/80 shadow-2xs text-[11px] sm:text-xs font-semibold"
               data-purpose="language-toggle"
             >
               <button
                 type="button"
                 onClick={() => handleLanguageChange("kn")}
-                className={`px-2.5 sm:px-3 py-1 rounded-full transition-all duration-200 text-xs kannada-text ${
+                className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full transition-all duration-200 kannada-text ${
                   isKn
                     ? "bg-karnataka-crimson text-white shadow-2xs font-semibold"
                     : "text-ink-500 dark:text-stone-400 hover:text-ink-900 dark:hover:text-stone-100 font-medium"
@@ -142,7 +142,7 @@ export default function StitchLandingPage() {
               <button
                 type="button"
                 onClick={() => handleLanguageChange("en")}
-                className={`px-2.5 sm:px-3 py-1 rounded-full transition-all duration-200 text-xs ${
+                className={`px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full transition-all duration-200 ${
                   !isKn
                     ? "bg-ink-900 dark:bg-stone-100 text-white dark:text-stone-950 shadow-2xs font-semibold"
                     : "text-ink-500 dark:text-stone-400 hover:text-ink-900 dark:hover:text-stone-100 font-medium"
@@ -155,16 +155,16 @@ export default function StitchLandingPage() {
             {/* Glowing Interactive Workspace CTA - Adaptive for Mobile */}
             <Link
               href="/workspace"
-              className="relative inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-ink-900 via-neutral-900 to-ink-900 dark:from-stone-800 dark:via-stone-900 dark:to-stone-800 hover:from-karnataka-crimson hover:to-karnataka-crimson-dark active:scale-[0.98] text-white text-xs sm:text-sm font-semibold tracking-tight shadow-sm hover:shadow-md transition-all group overflow-hidden border border-neutral-700/60 dark:border-stone-700"
+              className="relative inline-flex items-center gap-1 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-ink-900 via-neutral-900 to-ink-900 dark:from-stone-800 dark:via-stone-900 dark:to-stone-800 hover:from-karnataka-crimson hover:to-karnataka-crimson-dark active:scale-[0.98] text-white text-xs sm:text-sm font-semibold tracking-tight shadow-sm hover:shadow-md transition-all group overflow-hidden border border-neutral-700/60 dark:border-stone-700 shrink-0"
               data-purpose="nav-primary-cta"
             >
               <span className="hidden sm:inline">
                 {isKn ? "ಕಾರ್ಯಕ್ಷೇತ್ರ ಪ್ರವೇಶಿಸಿ" : "Enter Workspace"}
               </span>
-              <span className="sm:hidden kannada-text">
+              <span className="sm:hidden kannada-text text-[11px]">
                 {isKn ? "ಪ್ರವೇಶಿಸಿ" : "Enter"}
               </span>
-              <span className="text-karnataka-gold group-hover:text-white transition-transform group-hover:translate-x-0.5 font-bold">
+              <span className="text-karnataka-gold group-hover:text-white transition-transform group-hover:translate-x-0.5 font-bold text-xs">
                 →
               </span>
             </Link>

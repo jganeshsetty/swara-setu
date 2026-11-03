@@ -514,7 +514,7 @@ export default function KannadaRagVoiceAgent() {
                   ? "ಧ್ವನಿಯನ್ನು ಆಲಿಸಲಾಗುತ್ತಿದೆ... ಮಾತನಾಡಿ (Listening in Kannada...)"
                   : "ಕನ್ನಡದಲ್ಲಿ ಯಾವುದೇ ಪ್ರಶ್ನೆ ಕೇಳಿ ಅಥವಾ ಮಾತನಾಡಿ..."
               }
-              className="w-full bg-stone-100/90 dark:bg-stone-950/80 border border-stone-300/80 dark:border-stone-700/80 focus:border-amber-500 dark:focus:border-amber-400 rounded-2xl px-3.5 py-2 text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-hidden transition-all"
+              className="w-full bg-stone-100/90 dark:bg-stone-950/80 border border-stone-300/80 dark:border-stone-700/80 focus:border-amber-500 dark:focus:border-amber-400 rounded-2xl px-3.5 py-2 text-base sm:text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-hidden transition-all font-kannada"
             />
             {question && (
               <button
