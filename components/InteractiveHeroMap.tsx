@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Compass, Sparkles, MapPin, Volume2, ArrowRight } from "lucide-react";
+import { Compass, Sparkles, MapPin, ArrowRight } from "lucide-react";
 
 interface DialectPreview {
   id: string;
@@ -11,7 +11,7 @@ interface DialectPreview {
   sampleColloquial: string;
   standardMeaning: string;
   regionColor: string;
-  accuracy: string;
+  regionTag: string;
 }
 
 const DIALECT_PREVIEWS: DialectPreview[] = [
@@ -22,7 +22,7 @@ const DIALECT_PREVIEWS: DialectPreview[] = [
     sampleColloquial: "ನೀವ್ ಹ್ಯಾಂಗಿದ್ದೀರಿ? ಚೊಲೊ ಇದ್ದೀರೇನು?",
     standardMeaning: "ಹೇಗಿದ್ದೀರಿ? ಚೆನ್ನಾಗಿದ್ದೀರಾ?",
     regionColor: "#FFE500",
-    accuracy: "99.8%",
+    regionTag: "ಉತ್ತರ ಭಾಗ",
   },
   {
     id: "karavali_coast",
@@ -31,7 +31,7 @@ const DIALECT_PREVIEWS: DialectPreview[] = [
     sampleColloquial: "ಎಂಚ ಉಲ್ಲರ್? ಊಟ ಆತೇನ್ ನಿಕ್ಲೆಗ್?",
     standardMeaning: "ಹೇಗಿದ್ದೀರಿ? ಊಟವಾಯಿತೇ ನಿಮಗೆ?",
     regionColor: "#0EA5E9",
-    accuracy: "99.4%",
+    regionTag: "ಕರಾವಳಿ ಭಾಗ",
   },
   {
     id: "krishna_valley",
@@ -40,7 +40,7 @@ const DIALECT_PREVIEWS: DialectPreview[] = [
     sampleColloquial: "ಖರೆ ಹೇಳತೇನ್ ಕೇಳ್ರಿ, ಧಾರವಾಡ ಪೇಢಾ ಮಸ್ತ್ ಐತಿ!",
     standardMeaning: "ನಿಜ ಹೇಳುತ್ತೇನೆ ಕೇಳಿ, ಧಾರವಾಡ ಪೇಡ ಅದ್ಭುತವಾಗಿದೆ!",
     regionColor: "#F59E0B",
-    accuracy: "99.6%",
+    regionTag: "ಧಾರವಾಡ ಶೈಲಿ",
   },
   {
     id: "malnad_ghats",
@@ -49,7 +49,7 @@ const DIALECT_PREVIEWS: DialectPreview[] = [
     sampleColloquial: "ಮಲೆನಾಡಿನಲ್ಲಿ ಮಳೆ ಜೋರಾಗಿ ಸುರಿತಿದೆ ಕಣ್ರೀ!",
     standardMeaning: "ಮಲೆನಾಡಿನಲ್ಲಿ ಮಳೆ ರಭಸವಾಗಿ ಸುರಿಯುತ್ತಿದೆ!",
     regionColor: "#10B981",
-    accuracy: "99.2%",
+    regionTag: "ಮಲೆನಾಡು ಶೈಲಿ",
   },
   {
     id: "kaveri_basin",
@@ -58,66 +58,56 @@ const DIALECT_PREVIEWS: DialectPreview[] = [
     sampleColloquial: "ಅರಮನೆ ನಗರಿಗೆ ಬಂದಾಗ ಆರಾಮಾಗಿದ್ದೀರಾ ಸ್ವಾಮಿ?",
     standardMeaning: "ಮೈಸೂರಿಗೆ ಬಂದಾಗ ಸುಖವಾಗಿದ್ದೀರಾ?",
     regionColor: "#D92D20",
-    accuracy: "99.9%",
+    regionTag: "ಮೈಸೂರು ಶೈಲಿ",
   },
 ];
 
 export default function InteractiveHeroMap() {
   const [selectedDialect, setSelectedDialect] = useState<DialectPreview>(DIALECT_PREVIEWS[0]);
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="relative bg-surface/95 backdrop-blur-md rounded-3xl p-5 sm:p-6 border border-hairline shadow-lg hover:shadow-xl transition-all duration-300">
-      {/* ── 1. Floating Animated Badges Around the Map ── */}
-      {/* Top Floating Badge */}
-      <div className="absolute -top-3.5 -right-2 sm:-right-4 z-20 animate-float-slow pointer-events-none">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-amber-300/80 shadow-md text-[11px] font-bold text-stone-900">
+    <div className="relative bg-surface/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-hairline shadow-md hover:shadow-lg transition-all duration-300 w-full max-w-full overflow-hidden">
+      {/* ── 1. Floating Quick Badges (Safely bounded for mobile) ── */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-amber-300 shadow-2xs text-[11px] font-bold text-stone-900">
           <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
           <span className="kannada-text">೧೦ ಪ್ರಾದೇಶಿಕ ಶೈಲಿಗಳು</span>
         </div>
-      </div>
-
-      {/* Bottom Floating Badge */}
-      <div className="absolute -bottom-3.5 -left-2 sm:-left-4 z-20 animate-float-reverse pointer-events-none">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-karnataka-crimson/40 shadow-md text-[11px] font-bold text-ink-900">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-karnataka-crimson/30 shadow-2xs text-[11px] font-bold text-ink-900">
           <div className="flex items-center gap-0.5">
-            <span className="w-1 h-3 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "0ms" }} />
-            <span className="w-1 h-4 rounded-full bg-karnataka-gold animate-waveform" style={{ animationDelay: "150ms" }} />
+            <span className="w-1 h-2.5 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "0ms" }} />
+            <span className="w-1 h-3.5 rounded-full bg-karnataka-gold animate-waveform" style={{ animationDelay: "150ms" }} />
             <span className="w-1 h-2 rounded-full bg-karnataka-crimson animate-waveform" style={{ animationDelay: "300ms" }} />
           </div>
-          <span className="kannada-text">ನೈಜ ಧ್ವನಿ ಸಂವಾದ AI</span>
+          <span className="kannada-text">ಧ್ವನಿ ಸಂವಾದ</span>
         </div>
       </div>
 
-      {/* ── 2. Telemetry Header ── */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-hairline text-xs font-mono text-ink-500">
+      {/* ── 2. Header Status Strip ── */}
+      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-hairline text-xs font-mono text-ink-500">
         <div className="flex items-center gap-2">
-          <Compass className="w-4 h-4 text-karnataka-crimson animate-spin" style={{ animationDuration: "18s" }} />
+          <Compass className="w-3.5 h-3.5 text-karnataka-crimson animate-spin" style={{ animationDuration: "18s" }} />
           <span className="tracking-wider text-[11px] font-semibold text-ink-700">
-            KARNATAKA ATLAS • 31 DISTRICTS
+            ಕರ್ನಾಟಕ • 31 DISTRICTS
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-emerald-700 font-bold text-[11px]">ACTIVE RAG</span>
+          <span className="text-emerald-700 font-bold text-[11px]">ಲೈವ್ ನಕಾಶೆ</span>
         </div>
       </div>
 
       {/* ── 3. Geographically Correct Karnataka Vector Map ── */}
-      <div
-        className="relative rounded-2xl overflow-hidden bg-neutral-50/70 border border-neutral-200/80 p-3 sm:p-4 flex items-center justify-center transition-all group"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Soft Map Aura Glow */}
+      <div className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-50/80 border border-neutral-200/80 p-2 sm:p-4 flex items-center justify-center transition-all group">
+        {/* Soft Map Aura */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 via-transparent to-red-600/5 pointer-events-none" />
 
         {/* The Exact Geographically Correct Vector Map SVG */}
-        <div className="relative w-full max-h-[360px] flex items-center justify-center">
+        <div className="relative w-full max-h-[260px] sm:max-h-[340px] flex items-center justify-center">
           <img
             src="/karnataka-real-map.svg"
-            alt="ಭೌಗೋಳಿಕವಾಗಿ ನಿಖರವಾದ ಕರ್ನಾಟಕ ನಕಾಶೆ"
-            className="w-full h-auto max-h-[350px] object-contain drop-shadow-md select-none group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+            alt="ಕರ್ನಾಟಕ ನಕಾಶೆ"
+            className="w-full h-auto max-h-[250px] sm:max-h-[330px] object-contain drop-shadow-sm select-none group-hover:scale-[1.02] transition-transform duration-500 ease-out"
           />
 
           {/* Interactive Radar Beacon on the Map */}
@@ -132,24 +122,24 @@ export default function InteractiveHeroMap() {
           </div>
         </div>
 
-        {/* Floating Quick Hint overlay on Hover */}
+        {/* Floating Quick Hint overlay on Map */}
         <div className="absolute bottom-2 inset-x-2 text-center pointer-events-none">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-medium px-2.5 py-1 rounded-full bg-black/60 text-white backdrop-blur-xs shadow-xs">
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs">
             <MapPin className="w-3 h-3 text-karnataka-gold" />
-            <span>ಕ್ಲಿಕ್ ಮಾಡಿ 3D ಮ್ಯಾಪ್‌ನಲ್ಲಿ ಪೂರ್ಣ ವಿವರ ವೀಕ್ಷಿಸಿ</span>
+            <span className="kannada-text">3D ನಕಾಶೆಯಲ್ಲಿ ಪೂರ್ಣ ವಿವರ ನೋಡಿ</span>
           </span>
         </div>
       </div>
 
-      {/* ── 4. Interactive Dialect Selector Chips (Moving Playground) ── */}
-      <div className="mt-4 space-y-2.5">
-        <div className="flex items-center justify-between text-[11px] font-mono text-ink-400">
-          <span>SELECT REGIONAL DIALECT REGISTER:</span>
-          <span className="text-emerald-700 font-bold">{selectedDialect.accuracy} Accuracy</span>
+      {/* ── 4. Interactive Dialect Selector Chips ── */}
+      <div className="mt-3.5 space-y-2.5">
+        <div className="flex items-center justify-between text-[11px] text-ink-500">
+          <span className="font-semibold kannada-text">ಪ್ರದೇಶವನ್ನು ಆರಿಸಿ:</span>
+          <span className="text-emerald-700 font-bold kannada-text">ನೈಜ ಆಡುಮಾತು</span>
         </div>
 
-        {/* Horizontal Scrollable Dialect Chips with Hover Elevation */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* Horizontal Scrollable Dialect Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none touch-pan-x">
           {DIALECT_PREVIEWS.map((dialect) => {
             const isSelected = selectedDialect.id === dialect.id;
             return (
@@ -157,10 +147,10 @@ export default function InteractiveHeroMap() {
                 key={dialect.id}
                 type="button"
                 onClick={() => setSelectedDialect(dialect)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   isSelected
-                    ? "bg-ink-900 text-white shadow-sm scale-105 ring-2 ring-karnataka-crimson/50"
-                    : "bg-paper text-ink-700 border border-hairline hover:bg-neutral-100 hover:border-zinc-300"
+                    ? "bg-ink-900 text-white shadow-xs scale-102 ring-2 ring-karnataka-crimson/50"
+                    : "bg-paper text-ink-700 border border-hairline hover:bg-neutral-100"
                 }`}
               >
                 <span
@@ -174,13 +164,13 @@ export default function InteractiveHeroMap() {
         </div>
 
         {/* Active Dialect Live Preview Box */}
-        <div className="p-3.5 rounded-xl border border-hairline bg-paper/90 transition-all duration-300 animate-in fade-in">
+        <div className="p-3 rounded-xl border border-hairline bg-paper/90 transition-all duration-300">
           <div className="flex items-center justify-between mb-1.5 text-xs">
-            <span className="font-bold text-ink-900 kannada-text">
+            <span className="font-bold text-ink-900 kannada-text truncate pr-2">
               {selectedDialect.kannadaName}
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
-              Grounded
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold shrink-0 kannada-text">
+              {selectedDialect.regionTag}
             </span>
           </div>
 
@@ -192,7 +182,7 @@ export default function InteractiveHeroMap() {
               </p>
             </div>
             <div className="text-[11px] text-ink-500 pl-3.5 border-l-2 border-karnataka-gold/60">
-              <span className="text-ink-400">ಪ್ರಮಾಣಿತ ಅರ್ಥ: </span>
+              <span className="text-ink-400 font-medium">ಅರ್ಥ: </span>
               <span className="kannada-text font-normal">{selectedDialect.standardMeaning}</span>
             </div>
           </div>
@@ -201,13 +191,12 @@ export default function InteractiveHeroMap() {
         {/* Direct Link to Enter the Full 3D Map */}
         <Link
           href="/workspace"
-          className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-ink-900 via-neutral-900 to-ink-900 hover:from-karnataka-crimson hover:to-karnataka-crimson-dark text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all group"
+          className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-ink-900 via-neutral-900 to-ink-900 hover:from-karnataka-crimson hover:to-karnataka-crimson-dark text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-xs hover:shadow-md transition-all group"
         >
-          <span>ಪೂರ್ಣ 3D ಸಂವಾದಾತ್ಮಕ ನಕಾಶೆ ತೆರೆಯಿರಿ</span>
+          <span className="kannada-text">ಪೂರ್ಣ 3D ನಕಾಶೆ ಮತ್ತು ಧ್ವನಿ ಸಂವಾದ ತೆರೆಯಿರಿ</span>
           <ArrowRight className="w-3.5 h-3.5 text-karnataka-gold group-hover:text-white transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
     </div>
   );
 }
-

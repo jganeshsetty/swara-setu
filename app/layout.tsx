@@ -4,13 +4,11 @@ import { ReactNode } from "react";
 export const metadata = {
   title: "Swara-Setu (ಸ್ವರಸೇತು) — Namma Kannada Regional Language Explorer",
   description:
-    "Explore the five regional dialects of Kannada through an interactive 360° 3D Karnataka map, " +
-    "AI-powered phrase comparison, and crowdsourced cultural documentation. " +
-    "Built for the Kannada Digital Innovation Hackathon 2026 — Problem Statement 4.",
+    "Explore the regional dialects of Kannada through an interactive 3D Karnataka map " +
+    "and AI voice assistant. Discover everyday phrases, slangs, and accents.",
   keywords: [
     "Kannada", "dialect", "regional language", "Karnataka", "Swara-Setu",
-    "Namma Kannada", "hackathon", "Havyaka", "Karavali", "Old Mysuru",
-    "Kittur", "Kalyana", "linguistics", "dialect comparison",
+    "Namma Kannada", "Karavali", "Old Mysuru", "Kittur", "Kalyana",
   ],
   authors: [{ name: "Swara-Setu Team" }],
   openGraph: {
@@ -20,9 +18,16 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#FAF9F5",
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="kn" className="h-full w-full scroll-smooth">
+    <html lang="kn" className="h-full w-full scroll-smooth overflow-x-hidden">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -31,7 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans min-h-screen w-full bg-paper text-ink-900 selection:bg-karnataka-gold-light selection:text-ink-900">
+      <body className="font-sans min-h-screen w-full max-w-full bg-paper text-ink-900 selection:bg-karnataka-gold-light selection:text-ink-900 overflow-x-hidden">
         {children}
       </body>
     </html>
