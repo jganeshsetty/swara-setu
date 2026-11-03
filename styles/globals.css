@@ -53,6 +53,23 @@
   background: linear-gradient(180deg, #EAAA08 50%, #D92D20 50%);
 }
 
+/* Dual-Tone Karnataka Arishina-Kumkuma (Yellow & Red) Cultural Dot Matrix */
+.bg-karnataka-dots {
+  background-image:
+    radial-gradient(circle, #EAAA08 1.4px, transparent 1.4px),
+    radial-gradient(circle, #D92D20 1.4px, transparent 1.4px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+
+.dark .bg-karnataka-dots {
+  background-image:
+    radial-gradient(circle, #FFE500 1.5px, transparent 1.5px),
+    radial-gradient(circle, #FF4545 1.5px, transparent 1.5px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+
 .kannada-text {
   font-family: 'Anek Kannada', 'Noto Sans Kannada', sans-serif;
   letter-spacing: 0.012em;

@@ -484,13 +484,13 @@ export default function KarnatakaMap3D() {
         <div className="h-full w-1/2 bg-[#D1262B]" title="ಕುಂಕುಮ (ಕೆಂಪು)" />
       </div>
 
-      {/* ── 2. Subtle Ambient Cultural Background Layers with Backside Karnataka Map ── */}
+      {/* ── 2. Subtle Ambient Cultural Background Layers with Backside Karnataka Map & Yellow/Red Dots ── */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden flex items-center justify-center">
         {/* Top Arishina / Golden Yellow Ambient Aura */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-b from-[#FFE500]/16 dark:from-[#FFE500]/22 via-[#F5B700]/7 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-b from-[#FFE500]/20 dark:from-[#FFE500]/26 via-[#F5B700]/10 to-transparent rounded-full blur-3xl" />
         
         {/* Bottom Kumkuma / Vermilion Red Warm Aura */}
-        <div className="absolute -bottom-36 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-t from-[#D1262B]/12 dark:from-[#D1262B]/18 via-[#E63946]/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-36 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-t from-[#D1262B]/16 dark:from-[#D1262B]/22 via-[#E63946]/8 to-transparent rounded-full blur-3xl" />
 
         {/* Backside Karnataka Map Silhouette Ambient Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -498,12 +498,18 @@ export default function KarnatakaMap3D() {
             src="/karnataka-real-map.svg"
             alt=""
             aria-hidden="true"
-            className="w-[520px] max-w-[75vw] max-h-[75vh] object-contain opacity-[0.06] dark:opacity-[0.08] filter blur-[0.2px] select-none pointer-events-none"
+            className="w-[540px] max-w-[78vw] max-h-[78vh] object-contain opacity-[0.07] dark:opacity-[0.10] filter blur-[0.2px] select-none pointer-events-none"
           />
         </div>
 
-        {/* Subtle Heritage Dot Grid Matrix */}
-        <div className="absolute inset-0 opacity-[0.25] dark:opacity-[0.35] bg-[radial-gradient(#b45309_0.8px,transparent_0.8px)] dark:bg-[radial-gradient(#d97706_0.8px,transparent_0.8px)] [background-size:26px_26px]" />
+        {/* Cultural Arishina-Kumkuma (Yellow & Red) Dot Matrix covering entire background */}
+        <div
+          className="absolute inset-0 bg-karnataka-dots opacity-60 dark:opacity-80 pointer-events-none transition-opacity duration-500"
+          aria-hidden="true"
+        />
+
+        {/* Central Radial Vignette so map area stays clean and readable */}
+        <div className="absolute inset-0 bg-radial-at-c from-transparent via-transparent to-white/40 dark:to-black/50 pointer-events-none" />
       </div>
 
       {/* ── 3. Unified Top Header (Back Button + Logo + Title + Theme Toggle, Zero Overlap) ── */}
