@@ -10,6 +10,7 @@ import { DISTRICT_TO_REGION_MAP, KANNADA_DISTRICT_NAMES } from "@/lib/districtMa
 import { dispatchMapDistrictSelect } from "@/lib/agentMapSync";
 import { STATIC_REGION_MAP, STATIC_REGIONS_LIST } from "@/lib/staticRegionData";
 import RegionBentoOverlay from "./RegionBentoOverlay";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export interface RegionData {
   regionId: string;
@@ -463,7 +464,7 @@ export default function KarnatakaMap3D() {
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-full h-full bg-gradient-to-b from-[#FFFDF2] via-[#FCFBF7] to-[#FFF4F4] flex justify-center items-center overflow-hidden select-none ${
+      className={`fixed inset-0 w-full h-full bg-gradient-to-b from-[#FFFDF2] via-[#FCFBF7] to-[#FFF4F4] dark:from-[#0B0908] dark:via-[#140C0A] dark:to-[#1B1310] flex justify-center items-center overflow-hidden select-none transition-colors duration-500 ${
         isGrabbing ? "cursor-grabbing" : "cursor-grab"
       }`}
       style={{
@@ -480,10 +481,10 @@ export default function KarnatakaMap3D() {
       {/* ── 2. Subtle Ambient Cultural Background Layers with Backside Karnataka Map ── */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden flex items-center justify-center">
         {/* Top Arishina / Golden Yellow Ambient Aura */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-b from-[#FFE500]/16 via-[#F5B700]/7 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-b from-[#FFE500]/16 dark:from-[#FFE500]/22 via-[#F5B700]/7 to-transparent rounded-full blur-3xl" />
         
         {/* Bottom Kumkuma / Vermilion Red Warm Aura */}
-        <div className="absolute -bottom-36 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-t from-[#D1262B]/12 via-[#E63946]/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-36 left-1/2 -translate-x-1/2 w-[850px] max-w-[98vw] h-[380px] bg-gradient-to-t from-[#D1262B]/12 dark:from-[#D1262B]/18 via-[#E63946]/5 to-transparent rounded-full blur-3xl" />
 
         {/* Backside Karnataka Map Silhouette Ambient Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -491,31 +492,31 @@ export default function KarnatakaMap3D() {
             src="/karnataka-real-map.svg"
             alt=""
             aria-hidden="true"
-            className="w-[520px] max-w-[75vw] max-h-[75vh] object-contain opacity-[0.06] filter blur-[0.2px] select-none pointer-events-none"
+            className="w-[520px] max-w-[75vw] max-h-[75vh] object-contain opacity-[0.06] dark:opacity-[0.08] filter blur-[0.2px] select-none pointer-events-none"
           />
         </div>
 
         {/* Subtle Heritage Dot Grid Matrix */}
-        <div className="absolute inset-0 opacity-[0.25] bg-[radial-gradient(#b45309_0.8px,transparent_0.8px)] [background-size:26px_26px]" />
+        <div className="absolute inset-0 opacity-[0.25] dark:opacity-[0.35] bg-[radial-gradient(#b45309_0.8px,transparent_0.8px)] dark:bg-[radial-gradient(#d97706_0.8px,transparent_0.8px)] [background-size:26px_26px]" />
       </div>
 
-      {/* ── 3. Unified Top Header (Back Button + Logo + Title, Zero Overlap) ── */}
+      {/* ── 3. Unified Top Header (Back Button + Logo + Title + Theme Toggle, Zero Overlap) ── */}
       {!activeRegionData && (
         <>
           <header className="absolute top-2 sm:top-4 left-2 sm:left-5 z-20 pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 transition-opacity duration-300">
             {/* Unified Back to Landing Button */}
             <Link
               href="/"
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/95 hover:bg-white text-stone-900 border border-stone-200/90 hover:border-amber-400 shadow-xs text-xs font-semibold hover:shadow-md transition-all active:scale-95 group shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/95 hover:bg-white dark:bg-stone-900/90 dark:hover:bg-stone-800 text-stone-900 dark:text-stone-100 border border-stone-200/90 dark:border-stone-700/80 hover:border-amber-400 dark:hover:border-amber-500/50 shadow-xs text-xs font-semibold hover:shadow-md transition-all active:scale-95 group shrink-0"
               title="ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ (Back to Landing)"
             >
-              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-karnataka-crimson transition-transform group-hover:-translate-x-0.5" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-karnataka-crimson dark:text-red-400 transition-transform group-hover:-translate-x-0.5" />
               <span className="kannada-text text-[11px] sm:text-xs">ಮುಖಪುಟ</span>
             </Link>
 
             {/* Brand Logo & Title Container */}
-            <div className="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-1.5 pr-2.5 sm:pr-3 py-1 rounded-xl backdrop-blur-xl bg-white/90 border border-amber-300/60 shadow-xs">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 p-0.5 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-1.5 pr-2.5 sm:pr-3 py-1 rounded-xl backdrop-blur-xl bg-white/90 dark:bg-stone-900/90 border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 dark:bg-amber-400/15 border border-amber-500/30 dark:border-amber-400/30 p-0.5 flex items-center justify-center shrink-0">
                 <img
                   src="/karnataka-logo.svg"
                   alt="ಕರ್ನಾಟಕ ಲಾಂಛನ"
@@ -523,35 +524,39 @@ export default function KarnatakaMap3D() {
                 />
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <h1 className="font-serif text-xs sm:text-base font-bold text-stone-900 tracking-tight">
+                <h1 className="font-kannada text-xs sm:text-base font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
                   ಸ್ವರಸೇತು
                 </h1>
-                <span className="font-sans text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFE500] to-[#E63946] text-stone-950 shadow-xs border border-amber-300/80 hidden xs:inline-block">
+                <span className="font-kannada text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFE500] to-[#E63946] text-stone-950 shadow-xs border border-amber-300/80 hidden xs:inline-block">
                   ನಮ್ಮ ಕನ್ನಡ
                 </span>
               </div>
             </div>
           </header>
 
-          {/* Right Top Header Actions (Info Guide Button & Hovered Badge) */}
-          <div className="absolute top-2.5 sm:top-5 right-3 sm:right-6 z-20 pointer-events-auto flex items-center gap-2">
+          {/* Right Top Header Actions (Theme Toggle, Info Guide Button & Hovered Badge) */}
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-5 z-20 pointer-events-auto flex items-center gap-1.5 sm:gap-2">
             {hoveredRegion && (
-              <div className="hidden sm:flex backdrop-blur-xl bg-white/90 px-3 py-1.5 rounded-xl border border-amber-300/60 shadow-sm items-center gap-2 animate-in fade-in">
+              <div className="hidden md:flex backdrop-blur-xl bg-white/90 dark:bg-stone-900/90 px-3 py-1.5 rounded-xl border border-amber-300/60 dark:border-amber-500/40 shadow-xs items-center gap-2 animate-in fade-in">
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                <span className="text-xs font-bold text-stone-900">
+                <span className="text-xs font-bold text-stone-900 dark:text-stone-100">
                   {KANNADA_DISTRICT_NAMES[hoveredDistrictName || ""] || hoveredDistrictName}
                 </span>
               </div>
             )}
 
+            {/* Dark/Light Mode Theme Toggle in Workspace */}
+            <ThemeToggle />
+
             <button
               type="button"
               onClick={() => setIsGuideVisible(!isGuideVisible)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl backdrop-blur-xl bg-white/90 hover:bg-white text-stone-800 border border-amber-300/60 shadow-[0_4px_16px_rgba(255,183,0,0.18)] text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/90 hover:bg-white dark:bg-stone-900/90 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-100 border border-amber-300/60 dark:border-amber-500/40 shadow-2xs text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer"
               title={isGuideVisible ? "ಮಾಹಿತಿ ಮುಚ್ಚಿರಿ" : "ಯೋಜನೆ ಮಾಹಿತಿ ಮತ್ತು ಬಳಕೆ ವಿಧಾನ"}
             >
-              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" />
-              <span>ಮಾಹಿತಿ (Info)</span>
+              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-400" />
+              <span className="hidden xs:inline">ಮಾಹಿತಿ (Info)</span>
+              <span className="xs:hidden">ಮಾಹಿತಿ</span>
             </button>
           </div>
         </>
@@ -559,34 +564,34 @@ export default function KarnatakaMap3D() {
 
       {/* ── 4. Mobile Quick Adjust Controls (Compact Pill, Non-Disturbing) ── */}
       {!activeRegionData && (
-        <div className="absolute top-14 left-3 z-20 sm:hidden flex items-center gap-1 pointer-events-auto backdrop-blur-xl bg-white/90 border border-amber-300/60 rounded-xl px-2 py-1 shadow-md">
+        <div className="absolute top-14 left-3 z-20 sm:hidden flex items-center gap-1 pointer-events-auto backdrop-blur-xl bg-white/90 dark:bg-stone-900/90 border border-amber-300/60 dark:border-amber-500/40 rounded-xl px-2 py-1 shadow-md text-stone-800 dark:text-stone-100">
           <button
             type="button"
             onClick={() => setZoomLevel(Number((scaleRef.current - 0.08).toFixed(2)))}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 active:bg-amber-200 text-stone-800"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 dark:bg-stone-800 active:bg-amber-200 dark:active:bg-stone-700 text-stone-800 dark:text-stone-100"
             title="Zoom Out"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[10px] font-bold text-stone-700 px-1">
+          <span className="text-[10px] font-bold text-stone-700 dark:text-stone-200 px-1">
             {Math.round(currentScale * 100)}%
           </span>
           <button
             type="button"
             onClick={() => setZoomLevel(Number((scaleRef.current + 0.08).toFixed(2)))}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 active:bg-amber-200 text-stone-800"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 dark:bg-stone-800 active:bg-amber-200 dark:active:bg-stone-700 text-stone-800 dark:text-stone-100"
             title="Zoom In"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
-          <div className="w-[1px] h-4 bg-stone-300 mx-0.5" />
+          <div className="w-[1px] h-4 bg-stone-300 dark:bg-stone-700 mx-0.5" />
           <button
             type="button"
             onClick={resetView}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 active:bg-amber-200 text-stone-800"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 dark:bg-stone-800 active:bg-amber-200 dark:active:bg-stone-700 text-stone-800 dark:text-stone-100"
             title="Reset View"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+            <RotateCcw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
           </button>
         </div>
       )}
@@ -598,28 +603,28 @@ export default function KarnatakaMap3D() {
           <button
             type="button"
             onClick={() => setIsZoomControlsVisible(!isZoomControlsVisible)}
-            className={`w-6 h-10 sm:w-7 sm:h-12 rounded-r-xl backdrop-blur-xl bg-white/90 hover:bg-white text-stone-800 border-y border-r border-amber-300/60 shadow-[0_4px_16px_rgba(0,0,0,0.12)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+            className={`w-6 h-10 sm:w-7 sm:h-12 rounded-r-xl backdrop-blur-xl bg-white/90 hover:bg-white dark:bg-stone-900/90 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-100 border-y border-r border-amber-300/60 dark:border-amber-500/40 shadow-[0_4px_16px_rgba(0,0,0,0.12)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer ${
               isZoomControlsVisible ? "order-2 -ml-1" : "order-1 ml-0"
             }`}
             title={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
             aria-label={isZoomControlsVisible ? "ಜೂಮ್ ಬಾರ್ ಮರೆಮಾಡಿ" : "ಜೂಮ್ ಬಾರ್ ತೋರಿಸಿ"}
           >
             {isZoomControlsVisible ? (
-              <ChevronLeft className="w-4 h-4 text-amber-900" />
+              <ChevronLeft className="w-4 h-4 text-amber-900 dark:text-amber-400" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-amber-900" />
+              <ChevronRight className="w-4 h-4 text-amber-900 dark:text-amber-400" />
             )}
           </button>
 
           {isZoomControlsVisible && (
-            <div className="order-1 backdrop-blur-2xl bg-white/85 border border-amber-300/50 shadow-[0_12px_32px_rgba(255,95,3,0.12)] rounded-2xl px-1.5 sm:px-2 py-2.5 sm:py-3 flex flex-col items-center gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-left-4">
+            <div className="order-1 backdrop-blur-2xl bg-white/85 dark:bg-stone-900/85 border border-amber-300/50 dark:border-amber-500/40 shadow-[0_12px_32px_rgba(255,95,3,0.12)] rounded-2xl px-1.5 sm:px-2 py-2.5 sm:py-3 flex flex-col items-center gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-left-4 text-stone-900 dark:text-stone-100">
               <button
                 type="button"
                 onClick={() => setZoomLevel(Number((scaleRef.current + 0.08).toFixed(2)))}
-                className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#FFE500]/40 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-xs cursor-pointer"
+                className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-stone-800 hover:bg-[#FFE500]/40 text-stone-900 dark:text-stone-100 border border-amber-300/60 dark:border-amber-500/40 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-xs cursor-pointer"
                 title="Zoom In"
               >
-                <ZoomIn className="w-3.5 h-3.5 text-stone-900" />
+                <ZoomIn className="w-3.5 h-3.5 text-stone-900 dark:text-stone-100" />
               </button>
 
               <div className="h-32 sm:h-36 flex items-center justify-center relative">
@@ -633,7 +638,7 @@ export default function KarnatakaMap3D() {
                   style={{
                     background: "linear-gradient(to right, #D1262B, #FFE500)",
                   }}
-                  className="accent-[#D1262B] cursor-pointer h-1 w-24 sm:w-28 -rotate-90 rounded-full border border-stone-300/40 shadow-inner outline-none transition-all"
+                  className="accent-[#D1262B] cursor-pointer h-1 w-24 sm:w-28 -rotate-90 rounded-full border border-stone-300/40 dark:border-stone-700 shadow-inner outline-none transition-all"
                   title={`ಜೂಮ್: ${Math.round(currentScale * 100)}%`}
                 />
               </div>
@@ -641,13 +646,13 @@ export default function KarnatakaMap3D() {
               <button
                 type="button"
                 onClick={() => setZoomLevel(Number((scaleRef.current - 0.08).toFixed(2)))}
-                className="w-6 h-6 rounded-lg bg-amber-50 hover:bg-[#D1262B]/20 text-stone-900 border border-amber-300/60 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-xs cursor-pointer"
+                className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-stone-800 hover:bg-[#D1262B]/20 text-stone-900 dark:text-stone-100 border border-amber-300/60 dark:border-amber-500/40 flex items-center justify-center transition-all hover:scale-105 active:scale-90 shadow-xs cursor-pointer"
                 title="Zoom Out"
               >
-                <ZoomOut className="w-3.5 h-3.5 text-stone-900" />
+                <ZoomOut className="w-3.5 h-3.5 text-stone-900 dark:text-stone-100" />
               </button>
 
-              <div className="pt-1 border-t border-amber-200/50 text-[9px] font-bold text-stone-700 tracking-tighter">
+              <div className="pt-1 border-t border-amber-200/50 dark:border-stone-800 text-[9px] font-bold text-stone-700 dark:text-stone-300 tracking-tighter">
                 {Math.round(currentScale * 100)}%
               </div>
             </div>
@@ -661,10 +666,10 @@ export default function KarnatakaMap3D() {
           <button
             type="button"
             onClick={resetView}
-            className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/80 hover:bg-white border border-amber-300/50 shadow-[0_8px_25px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 transition-all flex items-center gap-1.5 sm:gap-2 hover:scale-105 active:scale-95 cursor-pointer"
+            className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl bg-white/80 hover:bg-white dark:bg-stone-900/90 dark:hover:bg-stone-800 border border-amber-300/50 dark:border-amber-500/40 shadow-[0_8px_25px_rgba(0,0,0,0.08)] text-xs font-bold text-stone-800 dark:text-stone-100 transition-all flex items-center gap-1.5 sm:gap-2 hover:scale-105 active:scale-95 cursor-pointer"
             title="ಕೋನ ಮರುಹೊಂದಿಸಿ"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>ಕೋನ ಮರುಹೊಂದಿಸಿ (Reset)</span>
           </button>
         </div>
@@ -675,23 +680,23 @@ export default function KarnatakaMap3D() {
         <div className="fixed inset-0 z-50 pointer-events-none flex sm:justify-end items-end sm:items-center p-0 sm:p-6 sm:pr-8">
           {/* Mobile Backdrop */}
           <div
-            className="sm:hidden absolute inset-0 bg-black/40 backdrop-blur-xs pointer-events-auto"
+            className="sm:hidden absolute inset-0 bg-black/50 backdrop-blur-xs pointer-events-auto"
             onClick={() => setIsGuideVisible(false)}
           />
 
           <aside className="pointer-events-auto w-full sm:w-80 max-h-[82vh] sm:max-h-[86vh] flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom sm:slide-in-from-right-4 z-10">
-            <div className="backdrop-blur-2xl bg-white/95 sm:bg-white/90 border border-amber-200/80 shadow-[0_16px_50px_rgba(0,0,0,0.20)] rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 text-stone-800 overflow-y-auto drawer-scrollbar">
+            <div className="backdrop-blur-2xl bg-white/95 sm:bg-white/90 dark:bg-stone-900/95 sm:dark:bg-stone-900/90 border border-amber-200/80 dark:border-amber-500/40 shadow-[0_16px_50px_rgba(0,0,0,0.20)] dark:shadow-[0_16px_50px_rgba(0,0,0,0.60)] rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 text-stone-800 dark:text-stone-100 overflow-y-auto drawer-scrollbar">
               {/* Header Badge & Close Button */}
-              <div className="flex items-center justify-between border-b border-stone-200/70 pb-2.5 sm:pb-3">
+              <div className="flex items-center justify-between border-b border-stone-200/70 dark:border-stone-800 pb-2.5 sm:pb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-[#FFE500] to-[#D1262B] flex items-center justify-center text-stone-950 shadow-xs shrink-0">
                     <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-serif text-xs sm:text-sm font-bold text-stone-900">
+                    <h2 className="font-kannada text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
                       ಸ್ವರಸೇತು ಪರಿಚಯ
                     </h2>
-                    <p className="text-[9px] sm:text-[10px] text-stone-600 font-medium">
+                    <p className="text-[9px] sm:text-[10px] text-stone-600 dark:text-stone-400 font-medium">
                       ಕರ್ನಾಟಕ ಉಪಭಾಷಾ ಸಂಶೋಧಕ
                     </p>
                   </div>
@@ -700,7 +705,7 @@ export default function KarnatakaMap3D() {
                 <button
                   type="button"
                   onClick={() => setIsGuideVisible(false)}
-                  className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 flex items-center justify-center transition-all cursor-pointer"
                   title="ಮುಚ್ಚಿರಿ (Close)"
                   aria-label="ಮುಚ್ಚಿರಿ"
                 >
@@ -710,57 +715,57 @@ export default function KarnatakaMap3D() {
 
               {/* About the Project */}
               <div className="space-y-1 sm:space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-amber-950">
-                  <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-600" />
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-amber-950 dark:text-amber-300">
+                  <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-600 dark:text-amber-400" />
                   <span>ಈ ಯೋಜನೆಯ ಬಗ್ಗೆ (About)</span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-stone-700 leading-relaxed font-normal bg-amber-50/50 p-2 sm:p-2.5 rounded-xl border border-amber-200/50">
-                  <strong className="text-stone-900">ಸ್ವರಸೇತು</strong> ಕರ್ನಾಟಕದ ೧೦ ಸಾಂಸ್ಕೃತಿಕ ಪ್ರಾದೇಶಿಕ ನುಡಿಗಟ್ಟುಗಳನ್ನು, ಪ್ರಮಾಣಿತ ಪಠ್ಯಪುಸ್ತಕ ರೂಪದೊಂದಿಗೆ ಹೋಲಿಸಿ ಅನ್ವೇಷಿಸುವ ಕಲಾವಂತ ೩ಡಿ ಸಂವಾದಾತ್ಮಕ ವೇದಿಕೆ.
+                <p className="text-[11px] sm:text-xs text-stone-700 dark:text-stone-300 leading-relaxed font-normal bg-amber-50/50 dark:bg-amber-950/30 p-2 sm:p-2.5 rounded-xl border border-amber-200/50 dark:border-amber-800/40">
+                  <strong className="text-stone-900 dark:text-stone-100">ಸ್ವರಸೇತು</strong> ಕರ್ನಾಟಕದ ೧೦ ಸಾಂಸ್ಕೃತಿಕ ಪ್ರಾದೇಶಿಕ ನುಡಿಗಟ್ಟುಗಳನ್ನು, ಪ್ರಮಾಣಿತ ಪಠ್ಯಪುಸ್ತಕ ರೂಪದೊಂದಿಗೆ ಹೋಲಿಸಿ ಅನ್ವೇಷಿಸುವ ಕಲಾವಂತ ೩ಡಿ ಸಂವಾದಾತ್ಮಕ ವೇದಿಕೆ.
                 </p>
               </div>
 
               {/* How to Use Step-by-Step */}
               <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-stone-900">
-                  <MousePointer className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-600" />
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-stone-900 dark:text-stone-100">
+                  <MousePointer className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-600 dark:text-amber-400" />
                   <span>ಬಳಸುವುದು ಹೇಗೆ? (How to Use)</span>
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-2">
                   {/* Step 1 */}
-                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-amber-50/60 border border-amber-200/60">
+                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FFE500] text-stone-950 flex items-center justify-center text-[9px] sm:text-[10px] font-bold shrink-0 mt-0.5 shadow-xs">
                       ೧
                     </div>
                     <div className="text-[10px] sm:text-[11px] leading-snug">
-                      <strong className="text-stone-900">ಜಿಲ್ಲೆಯ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ:</strong>
-                      <p className="text-stone-600 mt-0.5">
+                      <strong className="text-stone-900 dark:text-stone-100">ಜಿಲ್ಲೆಯ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ:</strong>
+                      <p className="text-stone-600 dark:text-stone-400 mt-0.5">
                         ಭೂಪಟದಲ್ಲಿ ಯಾವುದೇ ಭಾಗವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ ೩೦ ಅಧಿಕೃತ ಆಡುಭಾಷೆಯ ವಾಕ್ಯಗಳ ವಿಂಡೋ ತೆರೆಯಿರಿ.
                       </p>
                     </div>
                   </div>
 
                   {/* Step 2 */}
-                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-rose-50/60 border border-rose-200/60">
+                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-rose-50/60 dark:bg-red-950/30 border border-rose-200/60 dark:border-red-800/40">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#D1262B] text-white flex items-center justify-center text-[9px] sm:text-[10px] font-bold shrink-0 mt-0.5 shadow-xs">
                       ೨
                     </div>
                     <div className="text-[10px] sm:text-[11px] leading-snug">
-                      <strong className="text-stone-900">೩ಡಿ ಕೋನ ತಿರುಗಿಸಿ (±೧೮೦°):</strong>
-                      <p className="text-stone-600 mt-0.5">
+                      <strong className="text-stone-900 dark:text-stone-100">೩ಡಿ ಕೋನ ತಿರುಗಿಸಿ (±೧೮೦°):</strong>
+                      <p className="text-stone-600 dark:text-stone-400 mt-0.5">
                         ಮೌಸ್ ಎಳೆದು ಅಥವಾ ಮೊಬೈಲ್ ಪರದೆ ಮೇಲೆ ಬೆರಳಾಡಿಸಿ ಮೂರು ಆಯಾಮದ ಮೇಲ್ಮೈ ವೀಕ್ಷಿಸಿ.
                       </p>
                     </div>
                   </div>
 
                   {/* Step 3 */}
-                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-amber-50/60 border border-amber-200/60">
+                  <div className="flex items-start gap-2 p-1.5 sm:p-2 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FFE500] text-stone-950 flex items-center justify-center text-[9px] sm:text-[10px] font-bold shrink-0 mt-0.5 shadow-xs">
                       ೩
                     </div>
                     <div className="text-[10px] sm:text-[11px] leading-snug">
-                      <strong className="text-stone-900">ಆಡಿಯೋ ಧ್ವನಿ ಆಲಿಸಿ:</strong>
-                      <p className="text-stone-600 mt-0.5">
+                      <strong className="text-stone-900 dark:text-stone-100">ಆಡಿಯೋ ಧ್ವನಿ ಆಲಿಸಿ:</strong>
+                      <p className="text-stone-600 dark:text-stone-400 mt-0.5">
                         ವಾಕ್ಯಗಳ ಪಕ್ಕದಲ್ಲಿರುವ <strong>ಆಲಿಸಿ</strong> ಗುಂಡಿ ಒತ್ತಿ ನೇಟಿವ್ ಕನ್ನಡ ಉಚ್ಚಾರಣೆಯನ್ನು ಆಲಿಸಿ.
                       </p>
                     </div>
@@ -769,12 +774,12 @@ export default function KarnatakaMap3D() {
               </div>
 
               {/* Cultural Palette Badge Footer */}
-              <div className="pt-2 border-t border-stone-200/70 flex items-center justify-between text-[9px] sm:text-[10px] text-stone-600">
-                <span className="flex items-center gap-1 font-semibold text-stone-700">
+              <div className="pt-2 border-t border-stone-200/70 dark:border-stone-800 flex items-center justify-between text-[9px] sm:text-[10px] text-stone-600 dark:text-stone-400">
+                <span className="flex items-center gap-1 font-semibold text-stone-700 dark:text-stone-300">
                   <span className="w-2 h-2 rounded-full bg-[#FFE500] border border-amber-400" />
                   ಉತ್ತರ: ಅರಿಶಿನ (ಹಳದಿ)
                 </span>
-                <span className="flex items-center gap-1 font-semibold text-stone-700">
+                <span className="flex items-center gap-1 font-semibold text-stone-700 dark:text-stone-300">
                   <span className="w-2 h-2 rounded-full bg-[#D1262B]" />
                   ದಕ್ಷಿಣ: ಕುಂಕುಮ (ಕೆಂಪು)
                 </span>
@@ -794,7 +799,7 @@ export default function KarnatakaMap3D() {
         {!geoData ? (
           <div className="flex flex-col items-center gap-3">
             <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <p className="font-serif text-sm font-semibold text-stone-800">
+            <p className="font-kannada text-sm font-semibold text-stone-800 dark:text-stone-200">
               ಕಲಾವಂತ ೩ಡಿ ಕರ್ನಾಟಕ ಭೂಪಟ ಸಿದ್ಧವಾಗುತ್ತಿದೆ...
             </p>
           </div>
@@ -1054,7 +1059,7 @@ export default function KarnatakaMap3D() {
                       y={district.centroid[1]}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      className="text-[11px] font-serif font-bold pointer-events-none select-none tracking-tight"
+                      className="text-[11px] font-kannada font-bold pointer-events-none select-none tracking-normal"
                       fill={isNorth ? "#000000" : "#FFFFFF"}
                       style={{
                         textShadow: isNorth

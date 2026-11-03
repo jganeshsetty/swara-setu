@@ -342,7 +342,7 @@ export default function KannadaRagVoiceAgent() {
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#FF5F03] to-amber-400 flex items-center justify-center text-white shadow-xs">
                   <Bot className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-serif font-bold text-xs text-stone-900 dark:text-stone-100">
+                <span className="font-kannada font-bold text-xs text-stone-900 dark:text-stone-100">
                   ಸ್ವರಸೇತು RAG ಸಂವಾದ (Kannada AI Assistant)
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300/70">
@@ -424,7 +424,7 @@ export default function KannadaRagVoiceAgent() {
               {isLoading && (
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs py-1">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                  <span className="font-serif">
+                  <span className="font-kannada">
                     {agentStatusText || "ಉತ್ತರ ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ (Processing query)..."}
                   </span>
                 </div>
@@ -471,7 +471,7 @@ export default function KannadaRagVoiceAgent() {
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
             title={isExpanded ? "ಚಿಕ್ಕದಾಗಿಸಿ" : "ಸಂವಾದ ವೀಕ್ಷಿಸಿ"}
-            className="flex items-center gap-1 px-2.5 py-2 rounded-2xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-colors text-[11px] font-serif shrink-0 border border-stone-200 dark:border-stone-700"
+            className="flex items-center gap-1 px-2.5 py-2 rounded-2xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-colors text-[11px] font-kannada shrink-0 border border-stone-200 dark:border-stone-700"
           >
             <div className="relative">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -534,7 +534,7 @@ export default function KannadaRagVoiceAgent() {
             title="ಕಳುಹಿಸಿ (Enter)"
             className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 via-[#FF5F03] to-red-600 hover:from-amber-600 hover:to-red-700 text-white font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 active:scale-95 cursor-pointer"
           >
-            <span className="font-serif hidden sm:inline">ಕೇಳಿ</span>
+            <span className="font-kannada font-bold hidden sm:inline">ಕೇಳಿ</span>
             <Send className="w-3.5 h-3.5" />
           </button>
         </form>

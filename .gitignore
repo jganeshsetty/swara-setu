@@ -35,3 +35,9 @@ backend/.env
 
 # Temporary artifacts
 brag-output*
+brag.mp4
+swara-walkthrough/
+.agents/
+.claude/
+skills-lock.json
+

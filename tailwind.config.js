@@ -54,10 +54,12 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "Plus Jakarta Sans", "system-ui", "sans-serif"],
-        serif: ["Noto Serif Kannada", "Noto Serif", "Georgia", "serif"],
-        kannada: ["Noto Sans Kannada", "sans-serif"],
-        tiro: ["Tiro Kannada", "serif"],
+        sans: ["Plus Jakarta Sans", "Inter", "Anek Kannada", "Noto Sans Kannada", "system-ui", "sans-serif"],
+        kannada: ["Anek Kannada", "Noto Sans Kannada", "sans-serif"],
+        anek: ["Anek Kannada", "sans-serif"],
+        hubballi: ["Hubballi", "cursive", "sans-serif"],
+        serif: ["Noto Serif Kannada", "Tiro Kannada", "Georgia", "serif"],
+        tiro: ["Tiro Kannada", "Noto Serif Kannada", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       keyframes: {

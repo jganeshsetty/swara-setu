@@ -243,7 +243,7 @@ export default function RegionBentoOverlay({
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight truncate">
+                    <h2 className="font-kannada text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                       {activeRegionData.nameKannada}
                     </h2>
                     {clickedDistrict && (
@@ -274,7 +274,7 @@ export default function RegionBentoOverlay({
 
             {/* ── 2. Top Page Navigation Bar (Clean & Aligned) ── */}
             <div className="px-5 py-2.5 bg-black/40 border-b border-white/10 flex items-center justify-between shrink-0">
-              <span className="text-xs font-serif font-bold text-amber-200">
+              <span className="text-xs font-kannada font-bold text-amber-200">
                 ವಾಕ್ಯಗಳ ಪುಟ {currentPage} / {totalPages}
               </span>
 
@@ -284,7 +284,7 @@ export default function RegionBentoOverlay({
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-white/15 text-stone-200"
+                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-white/15 text-stone-200 font-kannada"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>ಹಿಂದಿನದು</span>
@@ -315,7 +315,7 @@ export default function RegionBentoOverlay({
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-white/15 text-stone-200"
+                  className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-white/15 text-stone-200 font-kannada"
                 >
                   <span>ಮುಂದಿನದು</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -326,7 +326,7 @@ export default function RegionBentoOverlay({
             {/* ── 3. Content Body: Exactly 2 Sentences, Perfectly Spaced & Aligned ── */}
             <div className="p-4 sm:p-5 space-y-3.5 shrink-0">
               {isLoadingSentences ? (
-                <div className="py-12 text-center text-sm font-serif text-stone-300 animate-pulse">
+                <div className="py-12 text-center text-sm font-kannada text-stone-300 animate-pulse">
                   ವಾಕ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...
                 </div>
               ) : currentPhrases.length > 0 ? (
@@ -351,11 +351,11 @@ export default function RegionBentoOverlay({
                           {/* Regional Dialect Statement (The Highlight) */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
-                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1 font-kannada">
                                 <Sparkles className="w-3 h-3 text-amber-400" />
                                 ಆಡುಮಾತು ({activeRegionData.name})
                               </span>
-                              <p className="font-serif text-lg sm:text-xl font-bold text-amber-100 mt-1 leading-snug">
+                              <p className="font-kannada text-lg sm:text-xl font-bold text-amber-100 mt-1 leading-snug">
                                 "{item.regional}"
                               </p>
                             </div>
@@ -364,7 +364,7 @@ export default function RegionBentoOverlay({
                             <button
                               type="button"
                               onClick={() => onPlaySentence(item.regional)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-xs ${
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-xs font-kannada ${
                                 isPlayingRegional
                                   ? "bg-red-600 text-white animate-pulse"
                                   : "bg-amber-400 hover:bg-amber-300 text-stone-950"
@@ -377,9 +377,9 @@ export default function RegionBentoOverlay({
 
                           {/* Standard Textbook Kannada Equivalent */}
                           <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 text-xs text-stone-200 font-sans min-w-0">
+                            <div className="flex items-center gap-1.5 text-xs text-stone-200 min-w-0 font-kannada">
                               <span className="text-[10px] font-mono text-stone-400 shrink-0">📖 ಪ್ರಮಾಣಿತ:</span>
-                              <span className="font-serif font-medium text-stone-200 truncate">
+                              <span className="font-kannada font-medium text-stone-200 truncate">
                                 "{item.textbook}"
                               </span>
                             </div>
@@ -410,7 +410,7 @@ export default function RegionBentoOverlay({
                   </motion.div>
                 </AnimatePresence>
               ) : (
-                <div className="py-8 text-center text-stone-400 font-serif">
+                <div className="py-8 text-center text-stone-400 font-kannada">
                   ಈ ಪ್ರದೇಶಕ್ಕೆ ವಾಕ್ಯಗಳು ಲಭ್ಯವಿಲ್ಲ.
                 </div>
               )}

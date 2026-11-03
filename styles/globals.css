@@ -31,16 +31,33 @@
   background-image: radial-gradient(circle, #D4D4CE 0.8px, transparent 0.8px);
 }
 
+.dark .bg-grid-editorial {
+  background-image: radial-gradient(circle, #2E2923 1px, transparent 1px);
+}
+
 .karnataka-stripe {
   background: linear-gradient(180deg, #EAAA08 50%, #D92D20 50%);
 }
 
 .kannada-text {
-  font-family: 'Noto Sans Kannada', sans-serif;
+  font-family: 'Anek Kannada', 'Noto Sans Kannada', sans-serif;
+  letter-spacing: 0.012em;
+}
+
+.kannada-heading {
+  font-family: 'Anek Kannada', 'Noto Sans Kannada', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .kannada-classic {
-  font-family: 'Tiro Kannada', serif;
+  font-family: 'Tiro Kannada', 'Noto Serif Kannada', serif;
+  letter-spacing: 0.02em;
+}
+
+.kannada-artistic {
+  font-family: 'Hubballi', 'Anek Kannada', cursive;
+  letter-spacing: 0.02em;
 }
 
 .status-pulse {
